@@ -1276,7 +1276,8 @@ protected function formatPostForTemplate($post, $conversation)
 		)
 	);
 
-	$date = smartTime($post["time"], true);
+//	$date = smartTime($post["time"], true);
+	$date = getStrfTime($post["time"], T("date.short"));
 
 	// Add the date/time to the post info as a permalink.
 	$formatted["info"][] = "<a href='".URL(postURL($post["postId"]))."' class='time' title='".strftime(T("date.full"), $post["time"])."'>".(!empty($conversation["searching"]) ? T("Show in context") : $date)."</a>";
@@ -1285,14 +1286,14 @@ protected function formatPostForTemplate($post, $conversation)
 	if (!$post["deleteMemberId"]) {
 
 		// Add the user's online status / last action next to their name.
-		if (empty($post["preferences"]["hideOnline"])) {
-			$lastAction = ET::memberModel()->getLastActionInfo($post["lastActionTime"], $post["lastActionDetail"]);
-			if ($lastAction[0]) $lastAction[0] = " (".sanitizeHTML($lastAction[0]).")";
-			if ($lastAction) array_unshift($formatted["info"], "<".(!empty($lastAction[1]) ? "a href='{$lastAction[1]}'" : "span")." class='online' title='".T("Online")."{$lastAction[0]}'><i class='icon-circle'></i></".(!empty($lastAction[1]) ? "a" : "span").">");
-		}
+//		if (empty($post["preferences"]["hideOnline"])) {
+//			$lastAction = ET::memberModel()->getLastActionInfo($post["lastActionTime"], $post["lastActionDetail"]);
+//			if ($lastAction[0]) $lastAction[0] = " (".sanitizeHTML($lastAction[0]).")";
+//			if ($lastAction) array_unshift($formatted["info"], "<".(!empty($lastAction[1]) ? "a href='{$lastAction[1]}'" : "span")." class='online' title='".T("Online")."{$lastAction[0]}'><i class='icon-circle'></i></".(!empty($lastAction[1]) ? "a" : "span").">");
+//		}
 
 		// Show the user's group type.
-		$formatted["info"][] = "<span class='group'>".memberGroup($post["account"], $post["groups"])."</span>";
+//		$formatted["info"][] = "<span class='group'>".memberGroup($post["account"], $post["groups"])."</span>";
 		$formatted["class"][] = "group-".$post["account"];
 		foreach ($post["groups"] as $k => $v) {
 			if ($k) $formatted["class"][] = "group-".$k;

@@ -3,7 +3,8 @@
 
 if (!defined("IN_ESOTALK")) exit;
 
-const FMT_TIME = 'Y年m月d日 H時i分';
+//const FMT_TIME = 'Y年m月d日 H時i分';
+const FMT_TIME = 'Y/m/d H:i';
 
 function getStrfTime($time=null, $fmt=null) {
     $t = $time ? $time : time();

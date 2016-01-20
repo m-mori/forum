@@ -17,6 +17,7 @@ ET::$languageInfo["English"] = array(
 $definitions["charset"] = "utf-8";
 
 $definitions["date.full"] = "%c";
+$definitions["date.short"] = "M d";
 
 $definitions["%d day ago"] = "yesterday";
 $definitions["%d days ago"] = "%d days ago";

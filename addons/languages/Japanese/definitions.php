@@ -13,7 +13,8 @@ ET::$languageInfo["Japanese"] = array(
 // Define the character set that this language uses.
 $definitions["charset"] = "utf-8";
 
-$definitions["date.full"] = "%c";
+$definitions["date.full"] = "%Y/%m/%d %H:%M:%S";
+$definitions["date.short"] = "m/d";
 
 $definitions["%d day ago"] = "昨日";
 $definitions["%d days ago"] = "%d日前";
