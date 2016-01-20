@@ -21,7 +21,8 @@ $formattedPost = $this->formatPostForTemplate($post, $data["conversation"]);
 if ($prevPost and empty($prevPost["deleteMemberId"]) and $prevPost["memberId"] == $post["memberId"])
 	$formattedPost["hideAvatar"] = true;
 
-$thisPostTime = relativeTime($post["time"]);
+//$thisPostTime = relativeTime($post["time"]);
+$thisPostTime = getStrfTime($post["time"]);     // 年月日日時として表示
 
 ?>
 <li data-index='<?php echo date("Y", $post["time"]).date("m", $post["time"]); ?>'>
