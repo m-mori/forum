@@ -227,10 +227,11 @@ public function action_index($conversationId = false, $year = false, $month = fa
 
 		$controls = ETFactory::make("menu");
 
-		// Ignore conversation control
-		if (ET::$session->user) {
-			$controls->add("ignore", "<a href='".URL("conversation/ignore/".$conversation["conversationId"]."/?token=".ET::$session->token."&return=".urlencode($this->selfURL))."' id='control-ignore'><i class='icon-eye-close'></i> <span>".T($conversation["ignored"] ? "Unignore conversation" : "Ignore conversation")."</span></a>");
-		}
+                // 2016/1 削除
+//		// Ignore conversation control
+//		if (ET::$session->user) {
+//			$controls->add("ignore", "<a href='".URL("conversation/ignore/".$conversation["conversationId"]."/?token=".ET::$session->token."&return=".urlencode($this->selfURL))."' id='control-ignore'><i class='icon-eye-close'></i> <span>".T($conversation["ignored"] ? "Unignore conversation" : "Ignore conversation")."</span></a>");
+//		}
 
 		// Mark as unread/read control
 		if (ET::$session->user) {
