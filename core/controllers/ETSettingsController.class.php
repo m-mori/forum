@@ -143,11 +143,12 @@ public function action_general()
 	$form->setValue("starPrivate", ET::$session->preference("starPrivate"));
 	$form->addField("notifications", "starPrivate", array($this, "fieldStarPrivate"), array($this, "saveBoolPreference"));
 
-	$form->addSection("privacy", T("Privacy"));
-
-	// Add the "Don't allow other users to see when I am online" field.
-	$form->setValue("hideOnline", ET::$session->preference("hideOnline"));
-	$form->addField("privacy", "hideOnline", array($this, "fieldHideOnline"), array($this, "saveBoolPreference"));
+        // 2016/1 プライバシー 削除
+//	$form->addSection("privacy", T("Privacy"));
+//
+//	// Add the "Don't allow other users to see when I am online" field.
+//	$form->setValue("hideOnline", ET::$session->preference("hideOnline"));
+//	$form->addField("privacy", "hideOnline", array($this, "fieldHideOnline"), array($this, "saveBoolPreference"));
 
 	$this->trigger("initGeneral", array($form));
 
