@@ -180,7 +180,7 @@ $definitions["forumDescription"] = "%s is a web-forum discussing %s, and %s.";
 
 $definitions["Give this group the 'moderate' permission on all existing channels"] = "Moderate権限を与える";
 $definitions["Global permissions"] = "全体の権限";
-$definitions["Go to top"] = "始めに戻る";
+$definitions["Go to top"] = "画面のトップへ";
 $definitions["Group name"] = "グループの名前";
 $definitions["group.administrator"] = "Administrator";
 $definitions["group.administrator.plural"] = "Administrators";
@@ -212,7 +212,7 @@ $definitions["Installed Skins"] = "インストールされているスキン:";
 $definitions["Installed skins"] = "インストールされているスキン:";
 $definitions["is %s"] = "is %s";
 
-$definitions["Joined"] = "接続済み";
+$definitions["Joined"] = "初ログイン";
 $definitions["just now"] = "ちょうど今";
 
 $definitions["Keep me logged in"] = "ログインしたままにする";
@@ -238,9 +238,9 @@ $definitions["Manage Channels"] = "チャンネルを管理";
 $definitions["Manage Groups"] = "グループを管理";
 $definitions["Manage Languages"] = "言語を管理";
 $definitions["Manage your forum's channels (categories)"] = "チャンネル(カテゴリー)を管理";
-$definitions["Mark as read"] = "これをマークする";
-$definitions["Mark as unread"] = "マークを消す";
-$definitions["Mark all as read"] = "これらをすべてマーク";
+$definitions["Mark as read"] = "既読にする";
+$definitions["Mark as unread"] = "未読にする";
+$definitions["Mark all as read"] = "すべて既読にする";
 $definitions["Mark listed as read"] = "チェック項目を既読にする";
 $definitions["Maximum size of %s. %s."] = "Maximum size of %s. %s.";
 $definitions["Member groups"] = "メンバーのグループ";
