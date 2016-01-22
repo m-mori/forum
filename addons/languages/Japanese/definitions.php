@@ -180,7 +180,7 @@ $definitions["forumDescription"] = "%s is a web-forum discussing %s, and %s.";
 
 $definitions["Give this group the 'moderate' permission on all existing channels"] = "Moderate権限を与える";
 $definitions["Global permissions"] = "全体の権限";
-$definitions["Go to top"] = "画面のトップへ";
+$definitions["Go to top"] = "ページトップへ";
 $definitions["Group name"] = "グループの名前";
 $definitions["group.administrator"] = "Administrator";
 $definitions["group.administrator.plural"] = "Administrators";
