@@ -300,10 +300,12 @@ public function init()
 				->result();
 			$stat = Ts("statistic.online", "statistic.online.plural", number_format($online));
 			$stat = "<a href='".URL("members/online")."' class='link-membersOnline'>$stat</a>";
-			$this->addToMenu("statistics", "statistic-online", $stat);
+                        // 2016/1 削除 オンラインリンク
+//			$this->addToMenu("statistics", "statistic-online", $stat);
 		}
 
-		$this->addToMenu("meta", "copyright", "<a href='http://esotalk.org/' target='_blank'>".T("Powered by")." esoTalk</a>");
+                // 2016/1 削除 copyright
+//		$this->addToMenu("meta", "copyright", "<a href='http://esotalk.org/' target='_blank'>".T("Powered by")." esoTalk</a>");
 
 		// Set up some default JavaScript files and language definitions.
 		$this->addJSFile("core/js/lib/jquery.js", true);

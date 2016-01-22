@@ -216,9 +216,11 @@ public function action_index($channelSlug = false)
 
 		// ...and show them in the footer.
 		foreach ($stats as $k => $v) {
+                    if($k != "member") {
+                        // 2016/1 修正 メンバー一覧以外を出力
 			$stat = Ts("statistic.$k", "statistic.$k.plural", number_format($v));
-			if ($k == "member" and (C("esoTalk.members.visibleToGuests") or ET::$session->user)) $stat = "<a href='".URL("members")."'>$stat</a>";
 			$this->addToMenu("statistics", "statistic-$k", $stat, array("before" => "statistic-online"));
+                    }
 		}
 
 		$this->render("conversations/index");

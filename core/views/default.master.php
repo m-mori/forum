@@ -68,7 +68,7 @@ if (!defined("IN_ESOTALK")) exit;
 <div id='ftr-content'>
 <ul class='menu'>
 <li id='goToTop'><a href='#'><?php echo T("Go to top"); ?></a></li>
-<?php echo $data["metaMenuItems"]; ?>
+<?php //echo $data["metaMenuItems"]; ?>
 <?php if (!empty($data["statisticsMenuItems"])) echo $data["statisticsMenuItems"]; ?>
 </ul>
 </div>
