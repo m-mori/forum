@@ -142,12 +142,17 @@ class AttachmentModel extends ETModel {
 	public function insertAttachments($attachments, $keys)
 	{
 		$inserts = array();
-		foreach ($attachments as $id => $attachment)
-			$inserts[] = array_merge(array($id, $attachment["name"], $attachment["secret"]), array_values($keys));
+		foreach ($attachments as $id => $attachment) {
+                    $path = $this->path().$id.$attachment["secret"];
+                    $imgFile = file_get_contents($path);
+                    $inserts[] = array_merge(array($id, $attachment["name"], $attachment["secret"], $imgFile), array_values($keys));
+                }
 
+                // 2016/01 画像ファイルはDBへ保存するように修正
+                // et_attachment.content に格納
 		ET::SQL()
 			->insert("attachment")
-			->setMultiple(array_merge(array("attachmentId", "filename", "secret"), array_keys($keys)), $inserts)
+			->setMultiple(array_merge(array("attachmentId", "filename", "secret", "content"), array_keys($keys)), $inserts)
 			->exec();
 	}
 

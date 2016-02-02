@@ -23,6 +23,9 @@ class ETPlugin_Attachments extends ETPlugin {
 	// Setup: create the attachments table in the database and set up the filesystem for attachment storage.
 	public function setup($oldVersion = "")
 	{
+            // 2016/01 attachmentテーブルにカラム追加
+            // content(mediumblob): 画像バイナリデータ
+            // channelId(int): 投稿のチャンネルID
 		$structure = ET::$database->structure();
 		$structure->table("attachment")
 			->column("attachmentId", "varchar(13)", false)
@@ -31,6 +34,8 @@ class ETPlugin_Attachments extends ETPlugin {
 			->column("postId", "int(11) unsigned")
 			->column("draftMemberId", "int(11) unsigned")
 			->column("draftConversationId", "int(11) unsigned")
+			->column("content", "mediumblob", false)
+			->column("channelId", "int(11) unsigned")
 			->key("attachmentId", "primary")
 			->key("filename")
 			->exec(false);
