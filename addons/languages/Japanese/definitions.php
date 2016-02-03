@@ -15,6 +15,7 @@ $definitions["charset"] = "utf-8";
 
 $definitions["date.full"] = "%Y/%m/%d %H:%M:%S";
 $definitions["date.short"] = "m/d";
+$definitions["month.full"] = "n月";
 
 $definitions["%d day ago"] = "昨日";
 $definitions["%d days ago"] = "%d日前";

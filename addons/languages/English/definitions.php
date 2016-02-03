@@ -18,6 +18,7 @@ $definitions["charset"] = "utf-8";
 
 $definitions["date.full"] = "%c";
 $definitions["date.short"] = "M d";
+$definitions["month.full"] = "F";
 
 $definitions["%d day ago"] = "yesterday";
 $definitions["%d days ago"] = "%d days ago";
