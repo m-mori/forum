@@ -240,7 +240,8 @@ $(function() {
 	 });
 
 	// Set the default AJAX request settings.
-	$.ajaxSetup({timeout: 45000});
+        // XXX: ajaxタイムアウト設定(ms)
+	$.ajaxSetup({timeout: 60000});
 
 	// iOS Safari doesn't update position:fixed elements when the keyboard is up.
 	// So, whenever we focus on an input or textarea, change the header's position to absolute,
