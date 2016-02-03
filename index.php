@@ -16,4 +16,7 @@ define("PATH_PLUGINS", PATH_ROOT."/addons/plugins");
 define("PATH_SKINS", PATH_ROOT."/addons/skins");
 define("PATH_UPLOADS", PATH_ROOT."/uploads");
 
+// SWC 設定
+include_once 'define.php';
+
 require PATH_CORE."/bootstrap.php";
