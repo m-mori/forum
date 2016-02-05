@@ -266,15 +266,18 @@ public function init()
 {
 	// Check for updates to the esoTalk software, but only if we're the root admin and we haven't checked in
 	// a while.
-	if (ET::$session->userId == C("esoTalk.rootAdmin") and C("esoTalk.admin.lastUpdateCheckTime") + C("esoTalk.updateCheckInterval") < time())
-		ET::upgradeModel()->checkForUpdates();
+        // 1/28 掲示板バージョンUPチェック処理 削除
+//	if (ET::$session->userId == C("esoTalk.rootAdmin") and C("esoTalk.admin.lastUpdateCheckTime") + C("esoTalk.updateCheckInterval") < time())
+//		ET::upgradeModel()->checkForUpdates();
 
 	if ($this->responseType === RESPONSE_TYPE_DEFAULT) {
 
 		// If the user IS NOT logged in, add the 'login' and 'sign up' links to the bar.
 		if (!ET::$session->user) {
-			$this->addToMenu("user", "join", "<a href='".URL("user/join?return=".urlencode($this->selfURL))."' class='link-join'>".T("Sign Up")."</a>");
-			$this->addToMenu("user", "login", "<a href='".URL("user/login?return=".urlencode($this->selfURL))."' class='link-login'>".T("Log In")."</a>");
+                        // 1/28 リンク先変更 SWC新規登録ページへ
+			$this->addToMenu("user", "join", "<a href='".URL(getSwcUrl("entry") ."?return=".urlencode($this->selfURL))."' class='link-join'>".T("Sign Up")."</a>");
+                        // 1/28 リンク先変更 SWCログインページへ
+			$this->addToMenu("user", "login", "<a href='/login/index.php' class='link-login'>".T("Log In")."</a>");
 		}
 
 		// If the user IS logged in, we want to display their name and appropriate links.
@@ -286,6 +289,7 @@ public function init()
 			if (ET::$session->isAdmin())
 				$this->addToMenu("user", "administration", "<a href='".URL("admin")."' class='link-administration'>".T("Administration")."</a>");
 
+                        // TODO: 1/28 リンク先変更 ログアウト
 			$this->addToMenu("user", "logout", "<a href='".URL("user/logout?token=".ET::$session->token)."' class='link-logout'>".T("Log Out")."</a>");
 		}
 

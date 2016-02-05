@@ -342,7 +342,7 @@ public function action_index($conversationId = false, $year = false, $month = fa
 public function action_start($member = false)
 {
 	// If the user isn't logged in, redirect them to the login page.
-	if (!ET::$session->user) $this->redirect(URL("user/login?return=conversation/start"));
+	if (!ET::$session->user) $this->redirect(getSwcUrl('login'));
 
 	// If the user is suspended, show an error.
 	if (ET::$session->isSuspended()) {
