@@ -14,6 +14,7 @@ class ETSession extends ETModel {
 
 
 /**
+ * 最新のユーザ情報
  * An array of the current user's details, or null if they're not logged in.
  * @var array
  */
@@ -21,6 +22,7 @@ public $user;
 
 
 /**
+ * SWCのユーザID
  * The current user's member ID, or null if they're not logged in.
  * @var int
  */
@@ -28,6 +30,7 @@ public $userId;
 
 
 /**
+ * トークン TODO: 必要か？確認中
  * The current valid token.
  * @var string
  */
@@ -35,11 +38,26 @@ public $token;
 
 
 /**
+ * IPアドレス
  * The IP address of the current user.
  * @var string
  */
 public $ip;
 
+/**
+ * SWCから取得したアバター用画像データ
+ */
+public $userImg;
+
+/**
+ * SWCのユーザ情報
+ */
+public $userInfo;
+
+/**
+ * SWC取得情報の戻り値用クラス名
+ */
+static $swc_rel_classname = "ForumResult";
 
 /**
  * Class constructor: starts the session and initializes class properties (ip, token, user, etc.)
@@ -48,83 +66,78 @@ public $ip;
  */
 public function __construct()
 {
-	// Start a session.
-	session_name(C("esoTalk.cookie.name")."_session");
-	session_start();
-	if (empty($_SESSION["token"])) $this->regenerateToken();
+    // Session初期処理
+    $sesName = session_name();
+    // SWCログインフラグ
+    $isLogin = false;
+    // SWCユーザ情報
+    $userInfo = "";
+    if ($_COOKIE[SwcUtils::SWC_SESS_NAME]) {
+        // クッキーキーをチェック
+        // ログインチェック
+        $rtn = SwcUtils::isSwcLogin();
+        
+        // SWCログイン済の場合
+        if ($rtn instanceof self::$swc_rel_classname 
+                && $rtn->isLogin) {
+            // 戻り値が戻り値クラスインスタンスかつ、ログイン中の場合
+            
+            $isLogin=true;
+            // ユーザ情報取得設定
+            $this->userInfo = $rtn->userDetail;
+            // セッション設定
+            $_SESSION["userId"] = $this->userInfo['user_id'];
+        }
+    }    
+    
+    $sesName = session_name();
+    if ($isLogin || $sesName == SwcUtils::SWC_SESS_NAME) {
+	// ログイン済、またはSWCセッションが開始済の場合
+        // セッションはそのまま利用する
+        if (empty($_SESSION["token"])) {
+            $_SESSION["token"] = substr(md5(uniqid(rand())), 0, 13);
+            $_SESSION["userAgent"] = md5($_SERVER["HTTP_USER_AGENT"]);
+        }
+    } else {
+        // セッションがない場合 ETセッション開始
+        $etSesName = C("esoTalk.cookie.name")."_session";
+        if ($sesName != $etSesName) {
+            session_name(C("esoTalk.cookie.name")."_session");
+            session_start();
+            if (empty($_SESSION["token"])) $this->regenerateToken();
+        }
+    }
+    
+    // Complicate session highjacking - check the current user agent against the one that initiated the session.
+    if (md5($_SERVER["HTTP_USER_AGENT"]) != $_SESSION["userAgent"]) session_destroy();
 
-	// Complicate session highjacking - check the current user agent against the one that initiated the session.
-	if (md5($_SERVER["HTTP_USER_AGENT"]) != $_SESSION["userAgent"]) session_destroy();
 
-	// Set the class properties to reference session variables.
-	$this->token = &$_SESSION["token"];
-	$this->ip = $_SERVER["REMOTE_ADDR"];
-	$this->userId = &$_SESSION["userId"];
+    // Set the class properties to reference session variables.
+    $this->token = &$_SESSION["token"];
+    $this->ip = $_SERVER["REMOTE_ADDR"];
+    $this->userId = &$_SESSION["userId"];
 
-	// If a persistent login cookie is set, attempt to log in.
-	// We use this implementation: http://jaspan.com/improved_persistent_login_cookie_best_practice
-	if (!$this->userId and ($cookie = $this->getCookie("persistent"))) {
-
-		// Get the token, series, and member ID from the cookie.
-		$token = substr($cookie, -32);
-		$series = substr($cookie, -64, 32);
-		$memberId = (int)substr($cookie, 0, -64);
-
-		// Get an entry in the database with this memberId and series.
-		$result = ET::SQL()
-			->select("*")
-			->from("cookie")
-			->where("memberId", $memberId)
-			->where("series", $series)
-			->exec();
-
-		// If a matching record exists...
-		if ($row = $result->firstRow() and $row["series"] == $series) {
-
-			// If the token doesn't match, the user's cookie has probably been stolen by someone else.
-			if ($row["token"] != $token) {
-
-				// Delete this member's cookie identifier for this series, so the attacker will not be able
-				// to log in again.
-				ET::SQL()->delete()->from("cookie")->where("memberId", $memberId)->where("series", $series)->exec();
-
-				// Add an error to the model.
-				$this->error("cookieAuthenticationTheft");
-
-			}
-
-			// Otherwise, authenticate the user.
-			else {
-				$this->loginWithMemberId($memberId);
-
-				// Generate a new token for the member.
-				$token = $this->createPersistentToken($memberId, $series);
-
-				// Set the cookie.
-				$this->setCookie("persistent", $memberId.$series.$token, time() + C("esoTalk.cookie.expire"));
-			}
-
-		}
-	}
-
-	// If there's a user logged in, get their user data.
-	if ($this->userId and C("esoTalk.installed")) $this->refreshUserData();
+    // If there's a user logged in, get their user data.
+    // 最新のユーザ情報をセッションに設定する
+    if ($this->userId and C("esoTalk.installed")) $this->refreshUserData($this->userInfo);
 }
 
 
-/**
- * Pulls fresh user data from the database into the $user property.
- *
- * @return void
- */
-public function refreshUserData()
-{
-	if (!$this->userId) return;
-	$this->user = ET::memberModel()->getById($this->userId);
-}
+    /**
+     * 最新のユーザ情報取得
+     * Pulls fresh user data from the database into the $user property.
+     * @return void
+     *
+    // 2016/02 SWCユーザ情報と、DB情報からユーザ情報を取得して、セッションに格納する
+     * session 作成時にしか呼ばれないメソッド
+     */
+    public function refreshUserData($userInfo) {
+        // セッションのユーザ情報設定
+        $this->user = ET::memberModel()->refreshUserData($userInfo);
+    }
 
-
 /**
+ * 外観情報
  * Get the value of a specific preference for the currently logged in user.
  *
  * @return mixed
@@ -136,6 +149,7 @@ public function preference($key, $default = false)
 
 
 /**
+ * 外観の設定
  * Set preferences for the current user.
  *
  * @param array $values An array of preferences to set.
