@@ -162,6 +162,8 @@ function name($username, $sanitize = true)
 if (!function_exists("avatar")) {
 
 /**
+ * アバター画像（SWCのプロフィール画像表示する）
+ * 
  * Return a HTML element to display a member's avatar.
  *
  * @param array $member An array of the member's details. (memberId and avatarFormat are required in this implementation.)
@@ -171,15 +173,20 @@ if (!function_exists("avatar")) {
  */
 function avatar($member = array(), $className = "")
 {
+    // SWCからユーザプロフィール画像取得urlをsrcに設定する
 	// Construct the avatar path from the provided information.
-	if (!empty($member["memberId"]) and !empty($member["avatarFormat"])) {
-		$file = "uploads/avatars/{$member["memberId"]}.{$member["avatarFormat"]}";
-		$url = getWebPath($file);
+        // TODO: SWCユーザに存在するユーザIDかチェック要
+	if (!empty($member["memberId"])) {
+		$url = SwcUtils::getUserImgUrl($member['memberId']);
 		return "<img src='$url' alt='' class='avatar $className'/>";
 	}
 
 	// Default to an avatar with the first letter of the member's name.
-	return "<span class='avatar $className'>".(!empty($member["username"]) ? strtoupper($member["username"][0]) : "&nbsp;")."</span>";
+        $l = strtoupper($member["username"][0]);
+        if (SwcUtils::isMB($member["username"][0])) {
+            $l = mb_strtoupper($member["username"][0]);
+        }
+	return "<span class='avatar $className'>".(!empty($member["username"]) ? $l : "&nbsp;")."</span>";
 }
 
 }
