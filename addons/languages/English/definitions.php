@@ -16,9 +16,12 @@ ET::$languageInfo["English"] = array(
 // Define the character set that this language uses.
 $definitions["charset"] = "utf-8";
 
+// SWC追加分 ///////////////////////////////////////////////
 $definitions["date.full"] = "%c";
 $definitions["date.short"] = "M d";
 $definitions["month.full"] = "F";
+$definitions["deleted"] = "deleted";   // 削除済みユーザ名
+///////////////////////////////////////////////////////////
 
 $definitions["%d day ago"] = "yesterday";
 $definitions["%d days ago"] = "%d days ago";

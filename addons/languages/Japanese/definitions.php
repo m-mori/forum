@@ -13,9 +13,12 @@ ET::$languageInfo["Japanese"] = array(
 // Define the character set that this language uses.
 $definitions["charset"] = "utf-8";
 
+// SWC追加分 ///////////////////////////////////////////////
 $definitions["date.full"] = "%Y/%m/%d %H:%M:%S";
 $definitions["date.short"] = "m/d";
 $definitions["month.full"] = "n月";
+$definitions["deleted"] = "削除済み";   // 削除済みユーザ名
+///////////////////////////////////////////////////////////
 
 $definitions["%d day ago"] = "昨日";
 $definitions["%d days ago"] = "%d日前";
