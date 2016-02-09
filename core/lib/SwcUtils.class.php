@@ -20,6 +20,7 @@ class SwcUtils {
     
     /**
      * アバター画像url取得用
+     * SWCプロフィール画像を出力するurlを取得
      * @param type $userId SWCユーザID
      * @return type
      */
@@ -33,9 +34,22 @@ class SwcUtils {
      */
     public static function isSwcLogin() {
         // Ethna側の処理を呼び出しログイン中かどうかチェック
-//        include_once(SWC_PROJECT_PATH . 'app/Subarucommunity_Controller.php');
         include_once(SWC_PROJECT_PATH . 'app/Subarucommunity_ForumController.php');
         $rtn = Subarucommunity_ForumController::main('Subarucommunity_ForumController', "forum_index");
+        return $rtn;
+    }
+    
+    /**
+     * SWCユーザ名（handle_name）取得
+     * ユーザ名は、SWCから毎回取得する
+     * @return type
+     */
+    public static function getUserName($userId) {
+        $userInfo = self::getUserDetail($userId);
+        $rtn = "";
+        if ($userInfo) {
+            $rtn = $userInfo["handle_name"];
+        }
         return $rtn;
     }
     
@@ -44,15 +58,20 @@ class SwcUtils {
      * @return type
      */
     public static function getUserDetail($userId) {
-        // Ethna側の処理を呼び出しユーザ情報取得
-        include_once(SWC_PROJECT_PATH . 'app/Subarucommunity_ForumController.php');
-        $params = array("id"=> $userId);
-        $info = Subarucommunity_ForumController::main('Subarucommunity_ForumController', "forum_user", "", $params);
-        $rtn = "";
-        if ($info instanceof self::$swc_rel_classname
-            && $info->userDetail) {
-            // ユーザ情報がある場合
-            $rtn = $info->userDetail;
+        // session から取得
+        $rtn = ET::$session->getUserInfo($userId);
+        if (!$rtn && $userId) {
+            // session にはない場合（通常ない）
+            // Ethna側の処理を呼び出しユーザ情報取得
+            include_once(SWC_PROJECT_PATH . 'app/Subarucommunity_ForumController.php');
+            $params = array("id"=> $userId);
+            $info = Subarucommunity_ForumController::main('Subarucommunity_ForumController', "forum_user", "", $params);
+            if ($info instanceof self::$swc_rel_classname
+                && $info->userDetail) {
+                // ユーザ情報がある場合
+                ET::$session->addUsersList($userId, $info->userDetail);
+                $rtn = $info->userDetail;
+            }
         }
         return $rtn;
     }

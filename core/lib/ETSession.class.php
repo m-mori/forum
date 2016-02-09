@@ -14,7 +14,7 @@ class ETSession extends ETModel {
 
 
 /**
- * 最新のユーザ情報
+ * SWCのログインユーザ情報
  * An array of the current user's details, or null if they're not logged in.
  * @var array
  */
@@ -22,7 +22,7 @@ public $user;
 
 
 /**
- * SWCのユーザID
+ * ログインユーザのSWCのユーザID
  * The current user's member ID, or null if they're not logged in.
  * @var int
  */
@@ -45,14 +45,15 @@ public $token;
 public $ip;
 
 /**
- * SWCから取得したアバター用画像データ
- */
-public $userImg;
-
-/**
- * SWCのユーザ情報
+ * SWCのログインユーザ情報
+ * （戻り値のまま）
  */
 public $userInfo;
+
+/**
+ * SWCのユーザ情報リスト（※session単位のキャッシュ）
+ */
+public $usersList;
 
 /**
  * SWC取得情報の戻り値用クラス名
@@ -60,6 +61,9 @@ public $userInfo;
 static $swc_rel_classname = "ForumResult";
 
 /**
+ * Session 初期処理
+ * リクエスト単位に、SWC側でSession構築される
+ * 基本、掲示板側では新たなSession は生成しない
  * Class constructor: starts the session and initializes class properties (ip, token, user, etc.)
  *
  * @return void
@@ -72,23 +76,26 @@ public function __construct()
     $isLogin = false;
     // SWCユーザ情報
     $userInfo = "";
-    if ($_COOKIE[SwcUtils::SWC_SESS_NAME]) {
-        // クッキーキーをチェック
-        // ログインチェック
-        $rtn = SwcUtils::isSwcLogin();
-        
-        // SWCログイン済の場合
-        if ($rtn instanceof self::$swc_rel_classname 
-                && $rtn->isLogin) {
-            // 戻り値が戻り値クラスインスタンスかつ、ログイン中の場合
-            
-            $isLogin=true;
-            // ユーザ情報取得設定
-            $this->userInfo = $rtn->userDetail;
-            // セッション設定
-            $_SESSION["userId"] = $this->userInfo['user_id'];
-        }
-    }    
+    // SWCユーザ情報リスト初期化
+    $this->usersList = array();
+    
+    // ---------------------------------
+    // SWCログインチェック
+    // ※SWC側でSession が生成される
+    // ---------------------------------
+    $rtn = SwcUtils::isSwcLogin();
+
+    // SWCログイン済の場合
+    if ($rtn instanceof self::$swc_rel_classname 
+            && $rtn->isLogin) {
+        // 戻り値が戻り値クラスインスタンスかつ、ログイン中の場合
+
+        $isLogin=true;
+        // ユーザ情報取得設定
+        $this->userInfo = $rtn->userDetail;
+        // セッション設定
+        $_SESSION["userId"] = $this->userInfo['user_id'];
+    }
     
     $sesName = session_name();
     if ($isLogin || $sesName == SwcUtils::SWC_SESS_NAME) {
@@ -99,7 +106,8 @@ public function __construct()
             $_SESSION["userAgent"] = md5($_SERVER["HTTP_USER_AGENT"]);
         }
     } else {
-        // セッションがない場合 ETセッション開始
+        // セッションがない場合（基本あり得ない）
+        //  ETセッション開始
         $etSesName = C("esoTalk.cookie.name")."_session";
         if ($sesName != $etSesName) {
             session_name(C("esoTalk.cookie.name")."_session");
@@ -111,31 +119,66 @@ public function __construct()
     // Complicate session highjacking - check the current user agent against the one that initiated the session.
     if (md5($_SERVER["HTTP_USER_AGENT"]) != $_SESSION["userAgent"]) session_destroy();
 
-
     // Set the class properties to reference session variables.
     $this->token = &$_SESSION["token"];
     $this->ip = $_SERVER["REMOTE_ADDR"];
     $this->userId = &$_SESSION["userId"];
 
     // If there's a user logged in, get their user data.
-    // 最新のユーザ情報をセッションに設定する
+    // ---------------------------------
+    // 最新のSWCユーザ情報をセッションに設定する
+    // ---------------------------------
     if ($this->userId and C("esoTalk.installed")) $this->refreshUserData($this->userInfo);
 }
 
-
     /**
-     * 最新のユーザ情報取得
+     * SWCユーザ情報取得
+     * SWCユーザ情報と、DB情報から掲示板ユーザ情報を取得して、セッションに格納する
+     * 
      * Pulls fresh user data from the database into the $user property.
      * @return void
-     *
-    // 2016/02 SWCユーザ情報と、DB情報からユーザ情報を取得して、セッションに格納する
-     * session 作成時にしか呼ばれないメソッド
      */
     public function refreshUserData($userInfo) {
         // セッションのユーザ情報設定
         $this->user = ET::memberModel()->refreshUserData($userInfo);
     }
 
+    /**
+     * ユーザ情報リストへ追加
+     * 1session単位のユーザ情報リストキャッシュ
+     * SWCから取得した他ユーザ情報を以下の配列形式で保持しておく
+     * ※SWCのAPI問合せを減らすため
+     *  array(
+     *      $userId => $userInfo
+     *  )
+     */
+    public function addUsersList($userId, $userInfo) {
+        // セッションのユーザ情報リスト追加
+        if (!array_key_exists($userId, $this->usersList)) {
+            // 存在しない場合 追加
+            $this->usersList[$userId] = $userInfo;
+        }
+    }
+
+    /**
+     * session のユーザ情報を取得
+     * 1session単位のユーザ情報リストに存在する場合返却する
+     */
+    public function getUserInfo($userId) {
+        $rtn = "";
+        if ($userId) {
+            if ($userId == $this->userId
+                    && $this->userInfo) {
+                // ログインユーザ情報の場合
+                $rtn = $this->userInfo;
+            } else if (array_key_exists($userId, $this->usersList)) {
+                // session ユーザ情報リストにある場合
+                $rtn = $this->usersList[$userId];
+            }
+        }
+        return $rtn;
+    }
+    
 /**
  * 外観情報
  * Get the value of a specific preference for the currently logged in user.
