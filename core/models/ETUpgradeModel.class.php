@@ -1,4 +1,9 @@
 <?php
+// 初期テーブル定義クラス（DDL）
+// 2016/02
+//  et_member.user_id カラム追加変更
+//  
+//  
 // Copyright 2011 Toby Zerner, Simon Zerner
 // This file is part of esoTalk. Please see the included license file for usage information.
 
@@ -136,17 +141,20 @@ protected function structure($drop = false)
 		->exec($drop);
 
 	// Member table.
+        // 2016/02 メンバーテーブルカラム変更対応
+        // memberId: SWCのユーザIDを格納するように変更、PK
+        // 不要列は削除: 
 	$structure
 		->table("member", "MyISAM")
-		->column("memberId", "int(11) unsigned", false)
+		->column("memberId", "int(10) unsigned", false)
 		->column("username", "varchar(31)", "")
-		->column("email", "varchar(63)", false)
+		->column("email", "varchar(63)", "")
 		->column("account", "enum('administrator','member','suspended')", "member")
 		->column("confirmed", "tinyint(1)", 0)
 		->column("password", "char(64)", "")
 		->column("resetPassword", "char(32)")
                 ->column("rememberToken", "char(32)")
-		->column("joinTime", "int(11) unsigned", false)
+		->column("joinTime", "int(11) unsigned", 0)
 		->column("lastActionTime", "int(11) unsigned")
 		->column("lastActionDetail", "tinyblob")
 		->column("avatarFormat", "enum('jpg','png','gif')")
@@ -154,12 +162,12 @@ protected function structure($drop = false)
 		->column("countPosts", "int(11) unsigned", 0)
 		->column("countConversations", "int(11) unsigned", 0)
 		->key("memberId", "primary")
-		->key("username", "unique")
-		->key("email", "unique")
+//		->key("username", "unique")
+//		->key("email", "unique")
 		->key("lastActionTime")
 		->key("account")
 		->key("countPosts")
-		->key("resetPassword")
+//		->key("resetPassword")
                 ->key("rememberToken")
 		->exec($drop);
 
@@ -254,20 +262,22 @@ public function install($info)
 	// Create the table structure.
 	$this->structure(true);
 
-	// Create the administrator member.
-	$member = array(
-		"username" => $info["adminUser"],
-		"email" => $info["adminEmail"],
-		"password" => $info["adminPass"],
-		"account" => "Administrator",
-		"confirmed" => true
-	);
-	ET::memberModel()->create($member);
-
-	// Set the session's userId and user information variables to the administrator, so that all entities
-	// created below will be created by the administrator user.
-	ET::$session->userId = 1;
-	ET::$session->user = ET::memberModel()->getById(1);
+        // 2016/02 インストール時処理 修正
+        // admin ユーザ登録は不要
+//	// Create the administrator member.
+//	$member = array(
+//		"username" => $info["adminUser"],
+//		"email" => $info["adminEmail"],
+//		"password" => $info["adminPass"],
+//		"account" => "Administrator",
+//		"confirmed" => true
+//	);
+//	ET::memberModel()->create($member);
+//
+//	// Set the session's userId and user information variables to the administrator, so that all entities
+//	// created below will be created by the administrator user.
+//	ET::$session->userId = 1;
+//	ET::$session->user = ET::memberModel()->getById(1);
 
 	// Create the moderator group.
 	ET::groupModel()->create(array(
@@ -277,7 +287,8 @@ public function install($info)
 
 	// Create the General Discussion channel.
 	$id = ET::channelModel()->create(array(
-		"title" => "General Discussion",
+		"title" => "全般",
+//		"title" => "General Discussion",
 		"slug" => slug("General Discussion")
 	));
 	ET::channelModel()->setPermissions($id, array(
