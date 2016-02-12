@@ -46,15 +46,19 @@ public function __construct()
  */
 public function create(&$values)
 {
-	// Validate the username, email, and password.
-	$this->validate("username", $values["username"], array($this, "validateUsername"));
-	$this->validate("email", $values["email"], array($this, "validateEmail"));
-	$this->validate("password", $values["password"], array($this, "validatePassword"));
+    // 2016/02 以下チェック不要
+//	// Validate the username, email, and password.
+//	$this->validate("username", $values["username"], array($this, "validateUsername"));
+//	$this->validate("email", $values["email"], array($this, "validateEmail"));
+//	$this->validate("password", $values["password"], array($this, "validatePassword"));
+//
+//	// Hash the password and set the join time.
+//	$values["password"] = $this->hashPassword($values["password"]);
+//	$values["joinTime"] = time();
 
-	// Hash the password and set the join time.
-	$values["password"] = $this->hashPassword($values["password"]);
-	$values["joinTime"] = time();
-
+    // SWCユーザID
+    $memberId = $values['memberId'];
+    
 	// Set default preferences.
 	if (empty($values["preferences"])) {
 		$preferences = array("email.privateAdd", "email.post", "starOnReply");
@@ -65,14 +69,16 @@ public function create(&$values)
 	$values["preferences"] = serialize($values["preferences"]);
 
 	if ($this->errorCount()) return false;
-
+        
+        // メンバーテーブル追加登録
 	$memberId = parent::create($values);
-	$values["memberId"] = $memberId;
+//	$values["memberId"] = $memberId;
 
 	$this->trigger("createAfter", array($values));
-	
+
+        // TODO: "join" のアクティビティログ登録確認要
 	// Create "join" activity for this member.
-	ET::activityModel()->create("join", $values);
+//	ET::activityModel()->create("join", $values);
 
 	// Go through the list of channels and unsubscribe from any ones that have that attribute set.
 	$channels = ET::channelModel()->getAll();
@@ -152,20 +158,83 @@ public function getWithSQL($sql)
 	return $members;
 }
 
+    /**
+     * 最新のユーザ情報取得
+     *
+     * 2016/02 SWCユーザ情報と、DBから掲示板ユーザ情報を取得し、
+     * マージしたユーザ情報配列を返却する
+     * 
+     * SWCユーザ情報はあるが、掲示板ユーザ情報にデータがない場合、
+     * 掲示板ユーザテーブルに、ユーザIDのデータを登録する
+     */
+    public function refreshUserData($userInfo) {
+        $userId = $userInfo['user_id'];
+        $mail = $userInfo['mail'];
+        if (!$userId || !$mail) {
+            // ユーザID、またはメールアドレスがない場合
+            // 存在しないユーザ 処理終了
+            return '';
+        }
+        
+        $user = $this->getById($userId, false);
+        if (!$user) {
+            // 掲示板メンバーテーブルにユーザデータがない場合登録する
+            // memberId= ユーザIDをPKとする
+            // TODO: 権限設定
+            // account= デフォルトはmember権限
+            $data = array(
+                "memberId" => $userId,
+                "account" => ACCOUNT_MEMBER,
+            );
+            $id = $this->create($data);
+            // 登録後、掲示板メンバー情報取得
+            $user = $this->getById($userId);
+        }
+        if ($user) {
+            // SWCユーザ情報を設定する
+            // @ユーザ名= ハンドル名
+            $user['username']=$userInfo['handle_name'];
+            // email= mail
+            $user['email']=$mail;
+            // TODO: ユーザ権限どうするか（account）確認要
+            // TODO: SWC初回ログイン取得方法確認要  
+            // joinTime= SSOのSWC初回ログイン
+            // avatarFormat 不要？
+        }
+        return $user;
+    }
+
 
 /**
+ * 2016/02 変更修正
+ * 
+ * SWCユーザ情報取得
+ * 
+ * SWC側のAPIでユーザ情報取得する。
+ * 掲示板のユーザ情報(et_member)にマージして返却する
+ * 
+ * $withSwcUserInfo= false の場合：
+ *  SWCユーザ情報を取得せずに返却する
+ * 
  * Get member data for the specified post ID.
  *
  * @param int $memberId The ID of the member.
+ * @param type $withSwcUserInfo 
  * @return array An array of the member's details.
  */
-public function getById($memberId)
-{
-	return reset($this->get(array("m.memberId" => $memberId)));
+public function getById($memberId, $withSwcUserInfo = true) {
+        if ($withSwcUserInfo) {
+            // SWCユーザ情報取得
+            $userInfo = SwcUtils::getUserDetail($memberId);
+            // ユーザ情報マージ処理
+            return $this->refreshUserData($userInfo);
+        } else {
+            // 2016/02 memberId= SWCのユーザID となる
+            return reset($this->get(array("m.memberId" => $memberId)));
+        }
 }
 
-
-/**
+    /**
  * Get member data for the specified member IDs, in the same order.
  *
  * @param array $ids The IDs of the members to fetch.
@@ -396,6 +465,7 @@ public function setPreferences($member, $preferences)
 	// Merge the member's old preferences with the new ones, giving preference to the new ones. Geddit?!
 	$preferences = array_merge((array)$member["preferences"], $preferences);
 
+        // TODO: IDキー値修正
 	$this->updateById($member["memberId"], array(
 		"preferences" => $preferences
 	));

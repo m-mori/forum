@@ -70,6 +70,8 @@ public function action_index($member = "")
 
 
 /**
+ * 2016/02 SWCユーザ情報取得するように対応
+ * 
  * Fetch the specified member's details, or render a not found error if the member doesn't exist.
  *
  * @param string $member The member's ID.
@@ -98,10 +100,18 @@ public function profile($member, $pane = "")
 	if (!$this->allowed()) return;
 
 	// Translate "me" to the currently logged in user. Otherwise, use the member ID provided.
-	if ($member == "me") $memberId = ET::$session->userId;
-	else $memberId = (int)$member;
+	if ($member == "me" || ((int)$member) == ET::$session->userId)  {
+            // ログインユーザの場合
+            // セッションから取得
+            $memberId = ET::$session->userId;
+            $member = ET::$session->user;
+        } else {
+            // それ以外のユーザ
+            $memberId = (int)$member;
+            $member = $this->getMember($memberId);
+        }
 
-	if (!($member = $this->getMember($memberId))) return false;
+	if (!$member) return false;
 
 	// Set the title and include relevant JavaScript.
 	$this->title = name($member["username"]);

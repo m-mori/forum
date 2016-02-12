@@ -494,7 +494,10 @@ public function getResults($conversationIDs, $checkForPermission = false)
 	$model = ET::conversationModel();
 
 	while ($row = $result->nextRow()) {
-
+            // 2016/02 SWCユーザ名設定    
+            $row["startMember"]=  SwcUtils::getUserName($row["startMemberId"]);
+            $row["lastPostMember"]=  SwcUtils::getUserName($row["lastPostMemberId"]);
+            
 		// Expand the comma-separated label flags into a workable array of active labels.
 		$row["labels"] = $model->expandLabels($row["labels"]);
 

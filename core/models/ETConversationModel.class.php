@@ -175,7 +175,7 @@ public function get($wheres = array())
 	$this->addAllowedPredicate($sql);
 
 	// Fetch the user's reply and moderate permissions for this conversation.
-	if (!ET::$session->isAdmin()) {
+    	if (!ET::$session->isAdmin()) {
 		$sql->select("BIT_OR(p.reply)", "canReply")
 			->select("BIT_OR(p.moderate)", "canModerate")
 			->select("BIT_OR(p.moderate)", "canDeleteConversation")
@@ -195,6 +195,8 @@ public function get($wheres = array())
 
 	// Get all the details from the result into an array.
 	$conversation = $result->firstRow();
+        // 2016/02 SWCユーザ名設定
+        $conversation["startMember"]=  SwcUtils::getUserName($conversation["startMemberId"]);
 
 	// Expand the labels field into a simple array of active labels.
 	$conversation["labels"] = $this->expandLabels($conversation["labels"]);

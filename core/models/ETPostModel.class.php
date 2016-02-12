@@ -65,7 +65,10 @@ public function getWithSQL($sql)
 	// Loop through the results and compile them into an array of posts.
 	$posts = array();
 	while ($post = $result->nextRow()) {
-
+                // 2016/02 SWCユーザ名を設定するように変更対応
+                $post["username"] = SwcUtils::getUserName($post["memberId"]);
+                $post["editMemberName"] = SwcUtils::getUserName($post["editMemberId"]);
+                $post["deleteMemberName"] = SwcUtils::getUserName($post["deleteMemberId"]);
 		ET::memberModel()->expand($post);
 		$posts[] = $post;
 
