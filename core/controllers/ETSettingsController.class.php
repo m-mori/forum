@@ -70,7 +70,8 @@ protected function profile($pane = "")
 	// Make a list of default member panes, and highlight the currently active one.
 	$panes = ETFactory::make("menu");
 	$panes->add("general", "<a href='".URL("settings/general")."'>".T("Settings")."</a>");
-	$panes->add("password", "<a href='".URL("settings/password")."'>".T("Change Password or Email")."</a>");
+// 2016/02 設定＞パスワード変更削除        
+//	$panes->add("password", "<a href='".URL("settings/password")."'>".T("Change Password or Email")."</a>");
 	$panes->add("notifications", "<a href='".URL("settings/notifications")."'>".T("Notifications")."</a>");
 	$panes->highlight($pane);
 
@@ -109,9 +110,10 @@ public function action_general()
 	// Construct the general settings form.
 	$form = ETFactory::make("form");
 
-	// Add the avatar section and field to the form.
-	$form->addSection("avatar", T("Avatar"));
-	$form->addField("avatar", "avatar", array($this, "fieldAvatar"), array($this, "saveAvatar"));
+        // 2016/02 アバター画像設定は削除
+//	// Add the avatar section and field to the form.
+//	$form->addSection("avatar", T("Avatar"));
+//	$form->addField("avatar", "avatar", array($this, "fieldAvatar"), array($this, "saveAvatar"));
 
 	// If there's more than 1 language installed, add the language section and field to the form.
 	if (count(ET::getLanguages()) > 1) {
