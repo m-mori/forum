@@ -179,7 +179,7 @@ public function action_index($conversationId = false, $year = false, $month = fa
 		// Construct a canonical URL to this page.
 		$url = conversationURL($conversation["conversationId"], $conversation["title"])."/$startFrom".($searchString ? "?search=".urlencode($searchString) : "");
 		$this->canonicalURL = URL($url, true);
-
+                // TODO: slug 確認
 		// If the slug in the URL is not the same as the actual slug, redirect.
 		$slug = slug($conversation["title"]);
 		if ($slug and (strpos($conversationId, "-") === false or substr($conversationId, strpos($conversationId, "-") + 1) != $slug)) {
@@ -311,7 +311,16 @@ public function action_index($conversationId = false, $year = false, $month = fa
 		$this->data("replyControls", $this->getEditControls("reply"));
 		$this->data("conversation", $conversation);
 		$this->data("controlsMenu", $controls);
-
+                
+                if (SWC_LIKE_BTN) {
+                    // FIXME: 2016/02 独自いいねボタン表示対象の場合
+                    // css, js ファイル追加
+                    $this->addCSSFile("/forum/core/button/css/button.css", "remote");
+//                    $this->addJSFile("core/button/js/modernizr-2.6.2.min.js");
+//                    $this->addJSFile("core/js/swc.button.js");
+                    $this->addJSFile("/forum/core/js/swc.button.js", "last");
+                }
+                
 		$this->render("conversation/index");
 
 	}
@@ -1261,6 +1270,7 @@ protected function formatPostForTemplate($post, $conversation)
 	$avatar = avatar($post);
 
 	// Construct the post array for use in the post view (conversation/post).
+        // title: SWCユーザ名を表示するように設定対応
 	$formatted = array(
 		"id" => "p".$post["postId"],
 		"title" => memberLink($post["memberId"], $post["username"]),

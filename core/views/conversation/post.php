@@ -11,8 +11,10 @@ if (!defined("IN_ESOTALK")) exit;
  */
 
 $post = $data["post"];
-?>
 
+if (SWC_FB_BTN): 
+// FB ボタン出力の場合
+?>
 <div id="fb-root"></div>
 <script>(function(d, s, id) {
   var js, fjs = d.getElementsByTagName(s)[0];
@@ -21,6 +23,7 @@ $post = $data["post"];
   js.src = "//connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v2.5";
   fjs.parentNode.insertBefore(js, fjs);
 }(document, 'script', 'facebook-jssdk'));</script>
+<?php endif; ?>
 
 <div class='post hasControls <?php echo implode(" ", (array)$post["class"]); ?>' id='<?php echo $post["id"]; ?>'<?php
 if (!empty($post["data"])):
@@ -52,19 +55,36 @@ endif; ?>>
 
 <?php if (!empty($post["title"])): ?>    
 <div class='postFooter'>
-<iframe allowtransparency="true" frameborder="0" scrolling="no" style="margin-top:5px;margin-left: 15px;vertical-align: middle;float:left;width:90px;height:20px;" src="http://platform.twitter.com/widgets/tweet_button.html?url=http%3a%2f%2fsample%2durl%2f&amp;lang=ja&amp;count=horizontal"></iframe>
-
-<div class="fb-like" style="float:left;margin-top: 5px;margin-right: 15px;" data-href="window.location.href;" data-layout="button_count" data-action="like" data-show-faces="true" data-share="false"></div>
-
 <?php if (!empty($post["footer"])): ?>
     <?php foreach ((array)$post["footer"] as $footer) echo $footer, "\n"; ?>
 <?php endif; ?>
+</div>
+    
+<?php endif; ?>
+    
+</div>
+
+<?php if (!empty($post["title"])): ?>    
+<div class='postSnsArea' style="padding: 5px 15px 0 15px;">
+
+    <?php if (SWC_TW_BTN): // TW ボタン出力の場合 ?>
+    <iframe allowtransparency="true" frameborder="0" scrolling="no" style="vertical-align: middle;float:left;width:90px;height:20px;" src="//platform.twitter.com/widgets/tweet_button.html?count=horizontal&AMP;lang=ja&AMP;hashtags=%E3%82%B9%E3%83%90%E3%82%B3%E3%83%9F"></iframe>
+    <?php endif; ?>
+
+    <?php if (SWC_FB_BTN): // FB ボタン出力の場合 ?>
+    <div class="fb-like" style="float:left;margin-right: 15px;" data-href="location.href;" data-layout="button_count" data-action="like" data-show-faces="true" data-share="false"></div>
+    <?php endif; ?>
+
+    <?php if (SWC_LIKE_BTN): // LIKE ボタン出力の場合 ?>
+    <div class="general-button swc-like-btn" data-uids="78083" data-kind="1" data-cid="1">
+        <div class="button-content">
+            <span class="favo-icon-font">twinkle</span>      
+            <span class="button-text">スバる！</span></div>
+    </div>
+    <?php endif; ?>
 
 </div>
 <?php endif; ?>
-
-    
-</div>
 
 </div>
 <br clear="all">
