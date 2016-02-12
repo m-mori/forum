@@ -141,6 +141,7 @@ function memberLink($memberId, $username = "")
 if (!function_exists("name")) {
 
 /**
+ * 削除済みユーザ名の変換
  * Return a member's name to be displayed in an HTML context. If the name is blank, it is assumed the member
  * has been deleted, and "[deleted]" is returned.
  *

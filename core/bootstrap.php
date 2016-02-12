@@ -109,6 +109,7 @@ require PATH_LIBRARY."/ETAdminController.class.php";
 require PATH_LIBRARY."/ETModel.class.php";
 require PATH_LIBRARY."/ETPlugin.class.php";
 require PATH_LIBRARY."/ETSkin.class.php";
+require PATH_LIBRARY."/SwcUtils.class.php";
 
 // Register main classes.
 ETFactory::register("database", "ETDatabase", PATH_LIBRARY."/ETDatabase.class.php");
@@ -199,11 +200,15 @@ ET::$session = ETFactory::make("session");
 
 // Check if any plugins need upgrading by comparing the versions in ET::$pluginInfo with the versions in
 // ET::$config.
-foreach (ET::$plugins as $k => $v) {
-	if (C("$k.version") != ET::$pluginInfo[$k]["version"]) {
-		if ($v->setup(C("$k.version"))) ET::writeConfig(array("$k.version" => ET::$pluginInfo[$k]["version"]));
-	}
-}
+// -------------------------------------------
+// 2016/02 プラグインのバージョンチェック処理 
+// 不要のため削除 （プラグインの追加変更なし）
+// -------------------------------------------
+////foreach (ET::$plugins as $k => $v) {
+//	if (C("$k.version") != ET::$pluginInfo[$k]["version"]) {
+//		if ($v->setup(C("$k.version"))) ET::writeConfig(array("$k.version" => ET::$pluginInfo[$k]["version"]));
+//	}
+//}
 
 
 

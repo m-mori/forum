@@ -43,7 +43,7 @@ $config["esoTalk.database.port"] = null;
 $config["esoTalk.database.user"] = "";
 $config["esoTalk.database.password"] = "";
 $config["esoTalk.database.dbName"] = "";
-$config["esoTalk.database.prefix"] = "";
+$config["esoTalk.database.prefix"] = "ft_";    // TODO: db prefix
 $config["esoTalk.database.characterEncoding"] = "utf8";
 $config["esoTalk.database.connectionOptions"] = array(
 	PDO::ATTR_PERSISTENT => false,
@@ -54,7 +54,7 @@ $config["esoTalk.database.connectionOptions"] = array(
 // Basic forum details.
 $config["esoTalk.forumTitle"] = "";
 $config["esoTalk.forumLogo"] = false; // Path to an image file to replace the title (don't make it too big or it'll stretch the header!)
-$config["esoTalk.language"] = "English";
+$config["esoTalk.language"] = "Japanese";   // 2016/02 日本語へ変更
 $config["esoTalk.baseURL"] = "";
 $config["esoTalk.resourceURL"] = ""; // URL used for all resources (CSS+JS+images, including those from plugins and skins.) If blank, the base URL will be used.
 $config["esoTalk.rootAdmin"] = 1; // The member ID of the root administrator.
@@ -94,13 +94,13 @@ $config["esoTalk.urls.rewrite"] = false; // ex. example.com/conversation/1 (requ
 
 // Some features that can be disabled.
 $config["esoTalk.enableEmailNotifications"] = true;
-$config["esoTalk.notificationCheckInterval"] = 30;
+$config["esoTalk.notificationCheckInterval"] = 60;
 
 // Search view settings.
-$config["esoTalk.search.limit"] = 50; // Number of conversations to list for a normal search.
-$config["esoTalk.search.limitIncrement"] = 200; // Number of additional results to load when "more results" is clicked.
+$config["esoTalk.search.limit"] = 30; // Number of conversations to list for a normal search.
+$config["esoTalk.search.limitIncrement"] = 100; // Number of additional results to load when "more results" is clicked.
 $config["esoTalk.search.limitMax"] = 9999; // Maximum number of results that can be viewed using the #limit gambit.
-$config["esoTalk.search.updateInterval"] = 60; // Number of seconds at which to automatically update the unread status, post count, and last post information for currently listed conversations in a search.
+$config["esoTalk.search.updateInterval"] = 180; // Number of seconds at which to automatically update the unread status, post count, and last post information for currently listed conversations in a search.
 $config["esoTalk.search.searchesPerMinute"] = 10; // Users are limited to this many normal searches every minute.
 $config["esoTalk.search.disableRandomGambit"] = false; // The "random" gambit can be very slow/intensive on large forums.
 
@@ -112,7 +112,7 @@ $config["esoTalk.conversation.maxCharsPerPost"] = 10000;
 $config["esoTalk.conversation.editPostTimeLimit"] = -1; // For how long can a user edit their own posts? -1 = forever | "reply" = until someone replies | x seconds
 
 // Conversation ajax-updating intervals. Set all of these to 0 to disable ajax-updating.
-$config["esoTalk.conversation.updateIntervalStart"] = 10; // The initial number of seconds before checking for new posts on the conversation view.
+$config["esoTalk.conversation.updateIntervalStart"] = 30; // The initial number of seconds before checking for new posts on the conversation view.
 $config["esoTalk.conversation.updateIntervalMultiplier"] = 1.5; // Each time we check for new posts and there are none, multiply the number of seconds by this.
 // ex. after 10 seconds, check for new posts. If there are none: after 10*1.5 = 15 seconds check for new posts. If there are none: after 15*1.5 = 22.5 seconds check for new posts...
 $config["esoTalk.conversation.updateIntervalLimit"] = 512; // The maximum number of seconds between checking for new posts.
