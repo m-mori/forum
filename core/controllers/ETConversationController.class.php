@@ -316,8 +316,7 @@ public function action_index($conversationId = false, $year = false, $month = fa
                     // FIXME: 2016/02 独自いいねボタン表示対象の場合
                     // css, js ファイル追加
                     $this->addCSSFile("/forum/core/button/css/button.css", "remote");
-//                    $this->addJSFile("core/button/js/modernizr-2.6.2.min.js");
-//                    $this->addJSFile("core/js/swc.button.js");
+                    // alax ファイルより後に読込み要
                     $this->addJSFile("/forum/core/js/swc.button.js", "last");
                 }
                 
@@ -1258,6 +1257,7 @@ public function action_restorePost($postId = false)
 
 
 /**
+ * 投稿単位(post)の出力用編集メソッド
  * Format post data into an array which can be used to display the post template view (conversation/post).
  *
  * @param array $post The post data.
@@ -1271,6 +1271,7 @@ protected function formatPostForTemplate($post, $conversation)
 
 	// Construct the post array for use in the post view (conversation/post).
         // title: SWCユーザ名を表示するように設定対応
+        // purl: 追加。SNSボタンリンク用に投稿単位の絶対urlを設定
 	$formatted = array(
 		"id" => "p".$post["postId"],
 		"title" => memberLink($post["memberId"], $post["username"]),
@@ -1280,6 +1281,7 @@ protected function formatPostForTemplate($post, $conversation)
 		"controls" => array(),
 		"body" => !$post["deleteMemberId"] ? $this->displayPost($post["content"]) : false,
 		"footer" => array(),
+		"purl" => URL(postURL($post["postId"]), TRUE),
 
 		"data" => array(
 			"id" => $post["postId"],
