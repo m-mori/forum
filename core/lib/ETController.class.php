@@ -699,8 +699,14 @@ public function addJSVar($key, $val)
  */
 public function addJSFile($file, $global = false)
 {
-	if (strpos($file, "://") !== false) $key = "remote";
-	$key = $global ? "global" : "local";
+    // 2016/02 後で読込むjsファイルは "last"を指定
+	if (strpos($file, "://") !== false) {
+            $key = "remote";
+        } else if ($global === "last") {
+            $key = "last";
+        } else {
+            $key = $global ? "global" : "local";
+        }
 	$this->jsFiles[$key][] = $file;
 }
 
@@ -716,8 +722,12 @@ public function addJSFile($file, $global = false)
  */
 public function addCSSFile($file, $global = false)
 {
-	if (strpos($file, "://") !== false) $key = "remote";
-	else $key = $global ? "global" : "local";
+	if (strpos($file, "://") !== false 
+            || $global=== "remote") {
+            $key = "remote";
+        } else {
+            $key = $global ? "global" : "local";
+        }
 	$this->cssFiles[$key][] = $file;
 }
 
@@ -823,8 +833,8 @@ public function head()
 	unset($this->jsFiles["remote"]);
 
 	// Same thing as above, but with JavaScript!
-	foreach ($this->jsFiles as $files) {
-
+	foreach ($this->jsFiles as $key => $files) {
+            if ($key !== "last") {
 		// If JS aggregation is enabled, and there's more than one file in this "group", proceed with aggregation.
 		if (count($files) > 1 and C("esoTalk.aggregateJS") and !(ET::$controller instanceof ETAdminController))
 			$files = $this->aggregateFiles($files, "js");
@@ -836,8 +846,15 @@ public function head()
 		// For each of the files that we need to include in the page, add a <script> tag.
 		foreach ($files as $file)
 			$head .= "<script src='".getResource($file)."?".filemtime($file)."'></script>\n";
+            }
 	}
-
+        
+	if (!empty($this->jsFiles["last"])) {
+		foreach ($this->jsFiles["last"] as $url) {
+			$head .= "<script src='$url'></script>\n";
+		}
+	}
+	unset($this->jsFiles["last"]);
 
 	// Output all necessary config variables and language definitions, as well as other variables.
 	$esoTalkJS = array(
