@@ -54,7 +54,7 @@ echo starButton($conversation["conversationId"], $conversation["starred"])."\n";
 ?>
 
 <?php if (!ET::$session->user): ?>
-<a href='<?php echo URL("user/login?return=".urlencode($this->selfURL)."/#reply"); ?>' class='button big'><i class="icon-plus"></i> <?php echo T("Post a Reply"); ?></a>
+<a href='<?php echo getSwcUrl('login'); ?>' class='button big'><i class="icon-plus"></i> <?php echo T("Post a Reply"); ?></a>
 <?php else: ?>
 <a href='#reply' class='button big' id='jumpToReply'><i class='icon-plus'></i> <?php echo T("Post a Reply"); ?></a>
 <?php endif; ?>
@@ -234,7 +234,7 @@ if (!$conversation["canReply"]) {
 			"id" => "reply",
 			"class" => "logInToReply",
 			"title" => "",
-			"body" => sprintf(T("message.logInToReply"), URL("user/login?return=".urlencode($this->selfURL)), URL("user/join?return=".urlencode($this->selfURL))),
+			"body" => sprintf(T("message.logInToReply"), getSwcUrl('login'), getSwcUrl('login')),
 			"avatar" => avatar()
 		);
 
