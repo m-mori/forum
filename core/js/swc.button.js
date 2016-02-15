@@ -1,20 +1,22 @@
 // いいねボタン JavaScript
 
 var SwcButton = {
-    init: function () {
+    init: function (btn) {
         // Add click handlers to all of the controls.
-        $("div.swc-like-btn").on("click", function (e) {
+        $(btn).on("click", function (e) {
             e.preventDefault();
             // 被いいね対象ID
             var uids = $(this).attr("data-uids");
             var kind = $(this).attr("data-kind");
             var cid = $(this).attr("data-cid");
+            var conid = $(this).attr("data-cid");
             var btnObj = this;
             if (uids && kind && cid) {
                 var data = new Object();
                 data["uids"] = uids;
                 data["kind"] = kind;
                 data["cid"] = cid;
+                data["conid"] = conid;
                 $.ajax({
                     type: 'POST',
                     url: "/api/point.php",
@@ -61,15 +63,16 @@ var SwcButton = {
         if (flg) {
             // liked-button
             $(btnObj).attr("class", "liked-button swc-like-btn");
+            // イベント解除
             $(btnObj).off("click");
         } else {
             $(btnObj).attr("class", "general-button swc-like-btn");
-            // イベントバインド
-            
+            // イベント再バインド
+            SwcButton.init(btnObj);
         }
     },
     
 };
 $(function () {
-    SwcButton.init();
+    SwcButton.init("div.swc-like-btn");
 });
