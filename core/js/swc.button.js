@@ -38,6 +38,7 @@ var SwcButton = {
                 success: function (data, textStatus, xhr) {
                     var ret = data["result"];
                     var liked = data["liked"];
+                    var cnt = data["cnt"];
                     if (ret == 1 && liked == 1) {
                         // いいね済みの場合
                         SwcButton.changeBtnState(btn, 1);
@@ -72,7 +73,7 @@ var SwcButton = {
             var uids = $(this).attr("data-uids");
             var kind = $(this).attr("data-kind");
             var cid = $(this).attr("data-cid");
-            var conid = $(this).attr("data-cid");
+            var conid = $(this).attr("data-conid");
             var btnObj = this;
             if (uids && kind && cid) {
                 var data = new Object();

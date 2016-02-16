@@ -77,10 +77,13 @@ if (!empty($post["title"]) && ($post["id"]!="reply")): ?>
     <?php endif; ?>
 
     <?php if (SWC_LIKE_BTN): // LIKE ボタン出力の場合 ?>
-    <div class="general-button swc-like-btn" data-cnt="<?php echo $post['likeCnt'];?>" data-liked="<?php echo $post['liked'];?>" data-uids="<?php echo $post['data']['memberid'];?>" data-kind="1" data-cid="<?php echo $post['data']['id'];?>" data-conid="<?php echo $post['data']['id'];?>">
+    <div class="general-button swc-like-btn" data-cnt="<?php echo $post['likeCnt'];?>" data-liked="<?php echo $post['liked'];?>" data-uids="<?php echo $post['data']['memberid'];?>" data-kind="1" data-cid="<?php echo $post['data']['id'];?>" data-conid="<?php echo $post['conversationId'];?>">
         <div class="button-content">
             <span class="favo-icon-font">twinkle</span>      
             <span class="button-text">スバる！</span></div>
+    </div>
+    <div style="display: inline-block;">
+        <div class="arrow_box"><?php echo $post['likeCnt'];?></div>
     </div>
     <?php endif; ?>
 

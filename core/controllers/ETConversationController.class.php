@@ -1275,6 +1275,7 @@ protected function formatPostForTemplate($post, $conversation)
         // likeCnt: 追加。いいねボタンのカウント数設定
 	$formatted = array(
 		"id" => "p".$post["postId"],
+		"conversationId" => $post["conversationId"],
 		"title" => memberLink($post["memberId"], $post["username"]),
 		"avatar" => (!$post["deleteMemberId"] and $avatar) ? "<a href='".URL(memberURL($post["memberId"], $post["username"]))."'>$avatar</a>" : false,
 		"class" => $post["deleteMemberId"] ? array("deleted") : array(),
