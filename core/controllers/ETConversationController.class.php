@@ -1272,6 +1272,7 @@ protected function formatPostForTemplate($post, $conversation)
 	// Construct the post array for use in the post view (conversation/post).
         // title: SWCユーザ名を表示するように設定対応
         // purl: 追加。SNSボタンリンク用に投稿単位の絶対urlを設定
+        // likeCnt: 追加。いいねボタンのカウント数設定
 	$formatted = array(
 		"id" => "p".$post["postId"],
 		"title" => memberLink($post["memberId"], $post["username"]),
@@ -1282,6 +1283,7 @@ protected function formatPostForTemplate($post, $conversation)
 		"body" => !$post["deleteMemberId"] ? $this->displayPost($post["content"]) : false,
 		"footer" => array(),
 		"purl" => URL(postURL($post["postId"]), TRUE),
+		"likeCnt" => $post["likeCnt"],
 
 		"data" => array(
 			"id" => $post["postId"],
@@ -1289,6 +1291,9 @@ protected function formatPostForTemplate($post, $conversation)
 		)
 	);
 
+        // いいね済みフラグ
+        $formatted["liked"] = $post["likeActivityId"] ? 1 : "";
+        
 //	$date = smartTime($post["time"], true);
 	$date = getStrfTime($post["time"], T("date.short"));
 

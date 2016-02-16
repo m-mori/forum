@@ -1,7 +1,70 @@
 // いいねボタン JavaScript
 
 var SwcButton = {
+    // api url
+    url: "/api/point.php",
+    // TODO: timeout(ms)
+    timeout: 30000,
+    
     init: function (btn) {
+        // カウント取得
+        var cnt = $(btn).attr("data-cnt");
+        var kind = $(this).attr("data-kind");
+        var cid = $(this).attr("data-cid");
+        if (!cnt 
+                && kind && cid) {
+            // TODO: カウント（data-cnt）設定なしの場合
+            // 初期表示処理呼び出し
+            // 初期表示フラグ, 種別, 記事IDを設定
+            var data = new Object();
+            data["init"] = 1;
+            data["kind"] = kind;
+            data["cid"] = cid;
+            $.ajax({
+                type: 'POST',
+                url: SwcButton.url,
+                dataType: 'json',
+                cache: false,
+                timeout: SwcButton.timeout, 
+                data: data,
+                beforeSend: function (xhr) {
+                    // 非表示にする
+                    SwcButton.changeBtnDisplay(btn, false);
+                },
+                complete: function (xhr, textStatus) {
+                    // 表示
+                    SwcButton.changeBtnDisplay(btn, 1);
+                },
+                success: function (data, textStatus, xhr) {
+                    var ret = data["result"];
+                    var liked = data["liked"];
+                    if (ret == 1 && liked == 1) {
+                        // いいね済みの場合
+                        SwcButton.changeBtnState(btn, 1);
+                    } else {
+                        // それ以外はデフォルト表示
+                        // クリックイベント設定
+                        SwcButton.registerEvent(btn);
+                    }
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    // 通信エラー時
+                    alert("サーバとの通信に失敗しました");
+                    SwcButton.changeBtnState(btnObj, false);
+                }
+            });
+            
+        } else {
+            // カウント設定済みの場合
+            // TODO: カウント設定
+            // いいね済みフラグ
+            var liked = $(btn).attr("data-liked");
+            // ボタン状態を設定
+            SwcButton.changeBtnState(btn, liked);
+        }
+    },
+    
+    registerEvent: function (btn) {    
         // Add click handlers to all of the controls.
         $(btn).on("click", function (e) {
             e.preventDefault();
@@ -19,12 +82,13 @@ var SwcButton = {
                 data["conid"] = conid;
                 $.ajax({
                     type: 'POST',
-                    url: "/api/point.php",
+                    url: SwcButton.url,
                     dataType: 'json',
                     cache: false,
-                    timeout: 30000,     // TODO: 
+                    timeout: SwcButton.timeout,  
                     data: data,
                     beforeSend: function (xhr) {
+                        // 二重押し対策しておく
                         SwcButton.changeBtnState(btnObj, 1);
                     },
                     complete: function (xhr, textStatus) {
@@ -33,8 +97,7 @@ var SwcButton = {
                         // 成功時
                         var ret = data["result"];
                         if (ret == 1) {
-                            // OK
-                            alert("結果 OK");
+                            // TODO: カウント反映
                             
                         } else if (ret==0) {
                             // NG
@@ -45,8 +108,8 @@ var SwcButton = {
                             SwcButton.changeBtnState(btnObj, false);
                         } else if (ret==9) {
                             // 未ログイン ログイン画面へ遷移
-                            var url = data["login_url"];
-                            window.location.href=url;
+                            var loginUrl = data["login_url"];
+                            window.location.href=loginUrl;
                         }
                     },
                     error: function (xhr, textStatus, errorThrown) {
@@ -59,6 +122,12 @@ var SwcButton = {
         });
     },
     
+    /**
+     * ボタン状態を変更
+     * @param {type} btnObj いいねボタン
+     * @param {type} flg いいね済みフラグ
+     * @returns {undefined}
+     */
     changeBtnState: function (btnObj, flg) {
         if (flg) {
             // liked-button
@@ -67,12 +136,24 @@ var SwcButton = {
             $(btnObj).off("click");
         } else {
             $(btnObj).attr("class", "general-button swc-like-btn");
-            // イベント再バインド
-            SwcButton.init(btnObj);
+            // イベントバインド
+            SwcButton.registerEvent(btnObj);
         }
     },
     
+    changeBtnDisplay: function (btnObj, flg) {
+        if (flg) {
+            // 表示
+            $(btnObj).css("display", "block");
+        } else {
+            // 非表示
+            $(btnObj).css("display", "none");
+        }
+    }
+    
 };
 $(function () {
-    SwcButton.init("div.swc-like-btn");
+    $("div.swc-like-btn").each(function(idx, elm) {
+        SwcButton.init(elm);
+    });
 });

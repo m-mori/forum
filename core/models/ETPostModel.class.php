@@ -31,6 +31,8 @@ public function __construct()
  */
 public function getWithSQL($sql)
 {
+    // likeActivityId: いいね済みの場合、ActivityId が存在する
+    // likeCnt: いいねボタンのカウント数（※ポイント数ではないので注意）
 	$sql->select("p.*")
 		->select("m.memberId", "memberId")
 		->select("m.username", "username")
@@ -44,9 +46,12 @@ public function getWithSQL($sql)
 		->select("dm.username", "deleteMemberName")
 		->select("m.lastActionTime", "lastActionTime")
 		->select("m.lastActionDetail", "lastActionDetail")
-
+                
 		->select("GROUP_CONCAT(g.groupId)", "groups")
 		->select("GROUP_CONCAT(g.name)", "groupNames")
+            
+//		->select("a.activityId", "likeActivityId")
+		->select("count(b.activityId)", "likeCnt")
 
 		->from("post p")
 		->from("member m", "m.memberId=p.memberId", "left")
@@ -54,10 +59,28 @@ public function getWithSQL($sql)
 		->from("member dm", "dm.memberId=p.deleteMemberId", "left")
 		->from("member_group mg", "m.memberId=mg.memberId", "left")
 		->from("group g", "g.groupId=mg.groupId", "left")
-
+            
+//		->from("activity a", 
+//                    "a.memberId=p.memberId AND a.type='like' AND a.fromMemberId=:fromMemberId AND a.postId=p.postId AND a.conversationId=p.conversationId", 
+//                    "left")
+            
+		->from("activity b", 
+                    "b.memberId=p.memberId AND b.type='like' AND b.fromMemberId is not null AND b.postId=p.postId AND b.conversationId=p.conversationId", 
+                    "left")
+            
 		->groupBy("p.postId")
 		->orderBy("p.time ASC");
 
+        $fromMemberId = ET::$session->userId;
+        if ($fromMemberId) {
+            // ログイン済みの場合 いいね済みを取得
+            $sql->select("a.activityId", "likeActivityId")
+                ->from("activity a", 
+                    "a.memberId=p.memberId AND a.type='like' AND a.fromMemberId=:fromMemberId AND a.postId=p.postId AND a.conversationId=p.conversationId", 
+                    "left")
+                ->bind(":fromMemberId", $fromMemberId);
+        }
+        
 	$this->trigger("getPostsBefore", array($sql));
 
 	$result = $sql->exec();
@@ -124,6 +147,8 @@ public function getByConversation($conversationId, $criteria = array())
 		->where("p.conversationId=:conversationId")
 		->bind(":conversationId", $conversationId);
 
+        // TODO: いいね済みかどうか取得設定要
+        
 	// If we're getting posts based on the when they were created...
 	if (isset($criteria["time"])) {
 		$time = (int)$criteria["time"];
