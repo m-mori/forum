@@ -58,8 +58,11 @@ class SwcUtils {
      * @return type
      */
     public static function getUserDetail($userId) {
-        // session から取得
-        $rtn = ET::$session->getUserInfo($userId);
+        if (ET::$session) {
+            // session開始済の場合
+            //  session から取得
+            $rtn = ET::$session->getUserInfo($userId);
+        }
         if (!$rtn && $userId) {
             // session にはない場合（通常ない）
             // Ethna側の処理を呼び出しユーザ情報取得
