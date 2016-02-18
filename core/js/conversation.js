@@ -664,12 +664,27 @@ restorePost: function(postId) {
 	});
 },
 
+/**
+ * SNSボタンエリアの表示切替
+ * @param {type} $snsArea JQObject
+ * @returns {undefined}
+ */
+switchDisplaySnsArea: function (strSnsArea, flg) {
+    if (flg) {
+        $(strSnsArea).css("display", "none");
+    } else {
+        $(strSnsArea).css("display", "block");
+    }
+},
+
 // Edit a post - make the post area into a textarea.
 editPost: function(postId) {
 
 	$.hideToolTip();
 	var post = $("#p" + postId);
-
+        // 2016/02 SNSエリア
+        var strSnsArea = "#p" + postId + " .postSnsArea";
+        
 	$.ETAjax({
 		url: "conversation/editPost.ajax/" + postId,
 		type: "get",
@@ -682,6 +697,8 @@ editPost: function(postId) {
 		success: function(data) {
 			if (data.messages || data.modalMessage) return;
 			ETConversation.updateEditPost(postId, data.view);
+                        // 編集モード時 SNSエリア非表示
+                        ETConversation.switchDisplaySnsArea(strSnsArea, 1);
 		}
 	});
 },
@@ -747,6 +764,8 @@ saveEditPost: function(postId, content) {
 	// Disable the buttons.
 	var post = $("#p" + postId);
 	$(".button", post).disable();
+        // SNS エリア
+        var strSnsArea = "#p" + postId + " .postSnsArea";
 
 	// Make the ajax request.
 	$.ETAjax({
@@ -759,6 +778,8 @@ saveEditPost: function(postId, content) {
 		complete: function() {
 			hideLoadingOverlay("p" + postId, true);
 			$(".button", post).enable();
+                        // SNSエリア表示
+                        ETConversation.switchDisplaySnsArea(strSnsArea, false);
 		},
 		success: function(data) {
 			if (data.messages) return;
@@ -799,6 +820,10 @@ cancelEditPost: function(postId) {
 	$(".postContent", newPost).height(startHeight).animate({height: newHeight}, "fast", function() {
 		$(this).height("");
 	});
+
+        // SNSエリア表示
+	var strSnsArea = "#p" + postId + " .postSnsArea";
+        ETConversation.switchDisplaySnsArea(strSnsArea, false);
 
 	ETConversation.initPost(newPost);
 
