@@ -342,6 +342,7 @@ public function action_index($conversationId = false, $year = false, $month = fa
 
 
 /**
+ * 会話（テーマ）作成処置
  * Show the start conversation page.
  *
  * @param string $member A member's name to make the conversation private with.
@@ -390,6 +391,7 @@ public function action_start($member = false)
 		$this->addJSVar("mentions", C("esoTalk.format.mentions"));
 		$this->addJSLanguage("message.confirmLeave", "message.confirmDiscardPost");
 
+                // TODO: 名前有りの場合 確認
 		// If there's a member name in the querystring, make the conversation that we're starting private
 		// with them and redirect.
 		if ($member and ET::$session->validateToken(R("token"))) {
@@ -407,7 +409,7 @@ public function action_start($member = false)
 
 	// If the form was submitted (validate the presence of the content field)...
 	if ($form->validPostBack("content")) {
-
+            // 登録時の処理
 		$model = ET::conversationModel();
 
 		$result = $model->create(array(
@@ -1273,6 +1275,7 @@ protected function formatPostForTemplate($post, $conversation)
         // title: SWCユーザ名を表示するように設定対応
         // purl: 追加。SNSボタンリンク用に投稿単位の絶対urlを設定
         // likeCnt: 追加。いいねボタンのカウント数設定
+        // mainPostFlg: 追加。テーマのメイン投稿（最初の投稿）フラグ
 	$formatted = array(
 		"id" => "p".$post["postId"],
 		"conversationId" => $post["conversationId"],
@@ -1285,6 +1288,7 @@ protected function formatPostForTemplate($post, $conversation)
 		"footer" => array(),
 		"purl" => URL(postURL($post["postId"]), TRUE),
 		"likeCnt" => $post["likeCnt"],
+		"mainPostFlg" => $post["mainPostFlg"],
 
 		"data" => array(
 			"id" => $post["postId"],

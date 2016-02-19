@@ -50,7 +50,6 @@ public function getWithSQL($sql)
 		->select("GROUP_CONCAT(g.groupId)", "groups")
 		->select("GROUP_CONCAT(g.name)", "groupNames")
             
-//		->select("a.activityId", "likeActivityId")
 		->select("count(b.activityId)", "likeCnt")
 
 		->from("post p")
@@ -59,10 +58,6 @@ public function getWithSQL($sql)
 		->from("member dm", "dm.memberId=p.deleteMemberId", "left")
 		->from("member_group mg", "m.memberId=mg.memberId", "left")
 		->from("group g", "g.groupId=mg.groupId", "left")
-            
-//		->from("activity a", 
-//                    "a.memberId=p.memberId AND a.type='like' AND a.fromMemberId=:fromMemberId AND a.postId=p.postId AND a.conversationId=p.conversationId", 
-//                    "left")
             
 		->from("activity b", 
                     "b.memberId=p.memberId AND b.type='like' AND b.fromMemberId is not null AND b.postId=p.postId AND b.conversationId=p.conversationId", 
@@ -147,8 +142,6 @@ public function getByConversation($conversationId, $criteria = array())
 		->where("p.conversationId=:conversationId")
 		->bind(":conversationId", $conversationId);
 
-        // TODO: いいね済みかどうか取得設定要
-        
 	// If we're getting posts based on the when they were created...
 	if (isset($criteria["time"])) {
 		$time = (int)$criteria["time"];
@@ -205,20 +198,28 @@ private function whereSearch(&$sql, $search)
 	$this->trigger("whereSearch", array($sql, $search));
 }
 
+/**
+ * 会話作成時の新規登録処理
+ * @param type $conversationId
+ * @param type $memberId
+ * @param type $content
+ * @param type $mainPostFlg
+ * @param type $title
+ */
+public function createMainPost($conversationId, $memberId, $content, $title = "") {
+    return $this->createPost($conversationId, $memberId, $content, $title, 1);
+}
 
 /**
- * Create a post in the specified conversation.
- *
- * This function will go through the post content and notify any members who are @mentioned.
- *
- * @param int $conversationId The ID of the conversation to create the post in.
- * @param int $memberId The ID of the author of the post.
- * @param string $content The post content.
- * @param string $title The title of the conversation (so it can be added alongside the post, for fulltext purposes.)
- * @return bool|int The new post's ID, or false if there were errors.
+ * 新規登録
+ * @param type $conversationId
+ * @param type $memberId
+ * @param type $content
+ * @param type $mainPostFlg
+ * @param type $title
+ * @return boolean
  */
-public function create($conversationId, $memberId, $content, $title = "")
-{
+private function createPost($conversationId, $memberId, $content, $title = "", $mainPostFlg=0) {
 	// Validate the post content.
 	$this->validate("content", $content, array($this, "validateContent"));
 
@@ -232,6 +233,11 @@ public function create($conversationId, $memberId, $content, $title = "")
 		"content" => $content,
 		"title" => $title
 	);
+        
+        // メインフラグ設定
+        if ($mainPostFlg) {
+            $data["mainPostFlg"]=1;
+        }
 
 	$id = parent::create($data);
 
@@ -292,6 +298,22 @@ public function create($conversationId, $memberId, $content, $title = "")
 	}
 
 	return $id;
+}
+
+/**
+ * Create a post in the specified conversation.
+ *
+ * This function will go through the post content and notify any members who are @mentioned.
+ *
+ * @param int $conversationId The ID of the conversation to create the post in.
+ * @param int $memberId The ID of the author of the post.
+ * @param string $content The post content.
+ * @param string $title The title of the conversation (so it can be added alongside the post, for fulltext purposes.)
+ * @return bool|int The new post's ID, or false if there were errors.
+ */
+public function create($conversationId, $memberId, $content, $title = "")
+{
+    return $this->createPost($conversationId, $memberId, $content, $title);
 }
 
 

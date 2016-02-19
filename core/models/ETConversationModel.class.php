@@ -641,10 +641,14 @@ public function create($data, $membersAllowed = array(), $isDraft = false)
 	// Add the first post or save the draft.
 	$postId = null;
 	if ($isDraft) {
+            // 下書きの場合
 		$this->setDraft($conversation, ET::$session->userId, $content);
 	}
 	else {
-		$postId = ET::postModel()->create($conversationId, ET::$session->userId, $content);
+            // 新規登録の場合
+            // 会話作成時の投稿登録時に、メインフラグ= 1を設定するようにする
+		$postId = ET::postModel()->createMainPost($conversationId, ET::$session->userId, $content);
+//		$postId = ET::postModel()->create($conversationId, ET::$session->userId, $content);
 
 		// If the conversation is private, send out notifications to the allowed members.
 		if (!empty($membersAllowed)) {
@@ -656,6 +660,7 @@ public function create($data, $membersAllowed = array(), $isDraft = false)
 		}
 	}
 
+        // TODO: private 登録確認
 	// If the conversation is private, add the allowed members to the database.
 	if (!empty($membersAllowed)) {
 		$inserts = array();

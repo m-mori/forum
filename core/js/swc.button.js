@@ -11,53 +11,56 @@ var SwcButton = {
         var cnt = $(btn).attr("data-cnt");
         var kind = $(this).attr("data-kind");
         var cid = $(this).attr("data-cid");
-        if (!cnt 
-                && kind && cid) {
-            // TODO: カウント（data-cnt）設定なしの場合
-            // 初期表示処理呼び出し
-            // 初期表示フラグ, 種別, 記事IDを設定
-            var data = new Object();
-            data["init"] = 1;
-            data["kind"] = kind;
-            data["cid"] = cid;
-            $.ajax({
-                type: 'POST',
-                url: SwcButton.url,
-                dataType: 'json',
-                cache: false,
-                timeout: SwcButton.timeout, 
-                data: data,
-                beforeSend: function (xhr) {
-                    // 非表示にする
-                    SwcButton.changeBtnDisplay(btn, false);
-                },
-                complete: function (xhr, textStatus) {
-                    // 表示
-                    SwcButton.changeBtnDisplay(btn, 1);
-                },
-                success: function (data, textStatus, xhr) {
-                    var ret = data["result"];
-                    var liked = data["liked"];
-                    var cnt = data["cnt"];
-                    if (ret == 1 && liked == 1) {
-                        // いいね済みの場合
-                        SwcButton.changeBtnState(btn, 1);
-                    } else {
-                        // それ以外はデフォルト表示
-                        // クリックイベント設定
-                        SwcButton.registerEvent(btn);
+        if (!cnt) { 
+            if (kind && cid) {
+                // カウント（data-cnt）設定なしの場合
+                // 初期表示処理呼び出し
+                // 初期表示フラグ, 種別, 記事IDを設定
+                var data = new Object();
+                data["init"] = 1;
+                data["kind"] = kind;
+                data["cid"] = cid;
+                $.ajax({
+                    type: 'POST',
+                    url: SwcButton.url,
+                    dataType: 'json',
+                    cache: false,
+                    timeout: SwcButton.timeout, 
+                    data: data,
+                    beforeSend: function (xhr) {
+                        // 非表示にする
+                        SwcButton.changeBtnDisplay(btn, false);
+                    },
+                    complete: function (xhr, textStatus) {
+                        // 表示
+                        SwcButton.changeBtnDisplay(btn, 1);
+                    },
+                    success: function (data, textStatus, xhr) {
+                        var ret = data["result"];
+                        var liked = data["liked"];
+                        var cnt = data["cnt"];
+                        if (ret == 1 && liked == 1) {
+                            // いいね済みの場合
+                            SwcButton.changeBtnCount(btn, cnt);
+                            SwcButton.changeBtnState(btn, 1);
+                        } else {
+                            // それ以外はデフォルト表示
+                            // クリックイベント設定
+                            SwcButton.registerEvent(btn);
+                        }
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        // 通信エラー時
+                        alert("サーバとの通信に失敗しました");
+                        SwcButton.changeBtnState(btnObj, false);
                     }
-                },
-                error: function (xhr, textStatus, errorThrown) {
-                    // 通信エラー時
-                    alert("サーバとの通信に失敗しました");
-                    SwcButton.changeBtnState(btnObj, false);
-                }
-            });
+                });
+            }
             
         } else {
             // カウント設定済みの場合
-            // TODO: カウント設定
+            // カウント設定
+            SwcButton.changeBtnCount(btn, cnt);
             // いいね済みフラグ
             var liked = $(btn).attr("data-liked");
             // ボタン状態を設定
@@ -98,7 +101,8 @@ var SwcButton = {
                         // 成功時
                         var ret = data["result"];
                         if (ret == 1) {
-                            // TODO: カウント反映
+                            // カウント反映
+                            SwcButton.changeBtnCount(btnObj, data['cnt']);
                             
                         } else if (ret==0) {
                             // NG
@@ -121,6 +125,18 @@ var SwcButton = {
                 });
             }
         });
+    },
+    
+    /**
+     * いいねカウント更新
+     * @param {type} btnObj
+     * @param {type} cnt
+     * @returns {undefined}
+     */
+    changeBtnCount: function (btnObj, cnt){
+        if (cnt) {
+            $(btnObj).next('div').children('.arrow_box').text(cnt);
+        }
     },
     
     /**
