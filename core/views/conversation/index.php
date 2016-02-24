@@ -182,15 +182,6 @@ if ($data["controlsMenu"]->count()): ?>
 </ul>
 <?php endif; ?>
 
-<?php
-// Members allowed list (only if conversation is private or editable)
-if (count($conversation["membersAllowedSummary"]) or $conversation["startMemberId"] == ET::$session->userId or $conversation["canModerate"]): ?>
-<div id='conversationPrivacy' class='area'>
-<span class='allowedList action'><?php $this->renderView("conversation/membersAllowedSummary", $data); ?></span>
-<?php if ($conversation["startMemberId"] == ET::$session->userId): ?><a href='<?php echo URL("conversation/edit/".$conversation["conversationId"]); ?>' id='control-changeMembersAllowed'><i class='icon-pencil'></i> <?php echo T("Change"); ?></a><?php endif; ?>
-</div>
-<?php endif; ?>
-
 <div id='conversationBody'>
 
 <?php // If we're searching but there are no search results, show an error.
