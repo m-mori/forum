@@ -42,9 +42,6 @@ if (!defined("PATH_VIEWS")) define("PATH_VIEWS", PATH_CORE."/views");
 require PATH_LIBRARY."/functions.general.php";
 require PATH_LIBRARY."/ET.class.php"; // phone home!
 
-// add swc function file
-require PATH_LIBRARY."/functions.swc.php";
-
 // Set up error and exception handling.
 function errorHandler($code, $message, $file, $line)
 {
@@ -109,6 +106,7 @@ require PATH_LIBRARY."/ETAdminController.class.php";
 require PATH_LIBRARY."/ETModel.class.php";
 require PATH_LIBRARY."/ETPlugin.class.php";
 require PATH_LIBRARY."/ETSkin.class.php";
+// ADD SWC Util
 require PATH_LIBRARY."/SwcUtils.class.php";
 
 // Register main classes.

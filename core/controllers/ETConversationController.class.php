@@ -220,7 +220,9 @@ public function action_index($conversationId = false, $year = false, $month = fa
 		$this->addJSFile("core/js/lib/jquery.autogrow.js");
 		$this->addJSFile("core/js/scrubber.js");
 		$this->addJSFile("core/js/autocomplete.js");
-		$this->addJSFile("core/js/conversation.js");
+//		$this->addJSFile("core/js/conversation.js");
+                // TODO: 4 debug
+		$this->addJSFile("/forum/core/js/conversation.js", "last");
 
 		// Add the RSS feed button.
 		// $this->addToMenu("meta", "feed", "<a href='".URL("conversation/index.atom/".$url)."' id='feed'>".T("Feed")."</a>");
@@ -351,7 +353,7 @@ public function action_index($conversationId = false, $year = false, $month = fa
 public function action_start($member = false)
 {
 	// If the user isn't logged in, redirect them to the login page.
-	if (!ET::$session->user) $this->redirect(getSwcUrl('login'));
+	if (!ET::$session->user) $this->redirect(SwcUtils::getSwcUrl('login'));
 
 	// If the user is suspended, show an error.
 	if (ET::$session->isSuspended()) {
@@ -387,7 +389,8 @@ public function action_start($member = false)
 		$this->addJSFile("core/js/lib/jquery.autogrow.js");
 		$this->addJSFile("core/js/scrubber.js");
 		$this->addJSFile("core/js/autocomplete.js");
-		$this->addJSFile("core/js/conversation.js");
+//		$this->addJSFile("core/js/conversation.js");    TODO: 4 debug
+		$this->addJSFile("/forum/core/js/conversation.js", "last");
 		$this->addJSVar("mentions", C("esoTalk.format.mentions"));
 		$this->addJSLanguage("message.confirmLeave", "message.confirmDiscardPost");
 
@@ -1300,7 +1303,7 @@ protected function formatPostForTemplate($post, $conversation)
         $formatted["liked"] = $post["likeActivityId"] ? 1 : "";
         
 //	$date = smartTime($post["time"], true);
-	$date = getStrfTime($post["time"], T("date.short"));
+	$date = SwcUtils::getStrfTime($post["time"], T("date.short"));
 
 	// Add the date/time to the post info as a permalink.
 	$formatted["info"][] = "<a href='".URL(postURL($post["postId"]))."' class='time' title='".strftime(T("date.full"), $post["time"])."'>".(!empty($conversation["searching"]) ? T("Show in context") : $date)."</a>";

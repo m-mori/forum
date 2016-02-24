@@ -16,8 +16,40 @@ class SwcUtils {
     // 戻り値クラス名
     static $swc_rel_classname = "ForumResult";
     
+    //const FMT_TIME = 'Y年m月d日 H時i分';
+    const FMT_TIME = 'Y/m/d H:i';
+
     function __construct() {}
     
+    /**
+     * SWC側へのリンクurl取得
+     * @param type $name
+     * @return string
+     */
+    public static function getSwcUrl($name) {
+        if ($name=='login') {
+            return SWC_MEMBERS_LOGIN;
+        } else if ($name=='entry') {
+            return SWC_MEMBERS_ENTRY;
+        } else if ($name =='logout') {
+            return URL("user/logout?token=".ET::$session->token);
+        }
+        return "";
+    }
+
+    /**
+     * 日付型の文字列フォーマット変換
+     * @param type $time
+     * @param type $fmt
+     * @return type
+     */
+    public static function getStrfTime($time=null, $fmt=null) {
+        $t = $time ? $time : time();
+        $fmt = $fmt ? $fmt : self::FMT_TIME;
+        $str = date($fmt, $t);
+        return $str;
+    }
+
     /**
      * アバター画像url取得用
      * SWCプロフィール画像を出力するurlを取得

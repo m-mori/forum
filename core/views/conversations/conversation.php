@@ -71,7 +71,7 @@ echo "<span class='action'>".avatar(array(
 	), "thumb"), " ",
 	sprintf(T("%s posted %s"),
 		"<span class='lastPostMember name'>".memberLink($conversation["lastPostMemberId"], $conversation["lastPostMember"])."</span>",
-		"<a href='".URL($conversationURL."/unread")."' class='lastPostTime'>".getStrfTime($conversation["lastPostTime"])."</a>"),
+		"<a href='".URL($conversationURL."/unread")."' class='lastPostTime'>".  SwcUtils::getStrfTime($conversation["lastPostTime"])."</a>"),
 	"</span>";
 ?></div>
 <div class='col-replies'><?php
