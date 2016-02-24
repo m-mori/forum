@@ -93,6 +93,11 @@ public function __construct()
         $isLogin=true;
         // ユーザ情報取得設定
         $this->userInfo = $rtn->userDetail;
+        // SWCのセッション情報から[user][session_id] を取得する
+        if (key_exists("user", $_SESSION)
+                && key_exists("session_id", $_SESSION["user"])) {
+            $this->userInfo["sessid"] = $_SESSION["user"]["session_id"];
+        }
         // セッション設定
         $_SESSION["userId"] = $this->userInfo['user_id'];
     }
@@ -177,6 +182,18 @@ public function __construct()
             }
         }
         return $rtn;
+    }
+    
+    /**
+     * ログインユーザのSessId 取得
+     * @return string
+     */
+    public function getSessId() {
+        if($this->userInfo
+            && key_exists("sessid", $this->userInfo)) {
+            return $this->userInfo["sessid"];
+        }
+        return "";
     }
     
 /**
@@ -523,6 +540,7 @@ public function getGroupIds()
  */
 public function store($key, $value)
 {
+    // TODO: Session 対応
 	$_SESSION[$key] = $value;
 }
 
