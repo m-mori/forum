@@ -229,11 +229,11 @@ public function action_index($conversationId = false, $year = false, $month = fa
 
 		$controls = ETFactory::make("menu");
 
-                // 2016/1 削除
-//		// Ignore conversation control
-//		if (ET::$session->user) {
-//			$controls->add("ignore", "<a href='".URL("conversation/ignore/".$conversation["conversationId"]."/?token=".ET::$session->token."&return=".urlencode($this->selfURL))."' id='control-ignore'><i class='icon-eye-close'></i> <span>".T($conversation["ignored"] ? "Unignore conversation" : "Ignore conversation")."</span></a>");
-//		}
+                // 2016/02 Ignore機能は必要
+		// Ignore conversation control
+		if (ET::$session->user) {
+			$controls->add("ignore", "<a href='".URL("conversation/ignore/".$conversation["conversationId"]."/?token=".ET::$session->token."&return=".urlencode($this->selfURL))."' id='control-ignore'><i class='icon-eye-close'></i> <span>".T($conversation["ignored"] ? "Unignore conversation" : "Ignore conversation")."</span></a>");
+		}
 
 		// Mark as unread/read control
 		if (ET::$session->user) {
@@ -370,6 +370,7 @@ public function action_start($member = false)
 	$channelId = $form->validPostBack("content") ? ET::$session->get("channelId") : ET::$session->get("searchChannelId");
 	ET::$session->store("channelId", isset($channels[$channelId]) ? $channelId : reset(array_keys($channels)));
 
+        // TODO: タグ入力 会話作成処理
 	// Get an empty conversation.
 	$model = ET::conversationModel();
 	$conversation = $model->getEmptyConversation();
@@ -412,7 +413,7 @@ public function action_start($member = false)
 
 	// If the form was submitted (validate the presence of the content field)...
 	if ($form->validPostBack("content")) {
-            // 登録時の処理
+            // 新規会話（テーマ） 登録時の処理
 		$model = ET::conversationModel();
 
 		$result = $model->create(array(
