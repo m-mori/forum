@@ -89,6 +89,29 @@ class SwcUtils {
         return strlen($s) != mb_strlen($s);
     }
     
+    /**
+     * 一意キー取得.
+     * 引数の桁数の半角数値・英小文字 [0-9.a-z]を返す
+     */
+    public static function createUniqKey($len) {
+        $key = md5(uniqid(mt_rand(),1));
+        return substr($key, -($len));
+    }
     
+    /**
+     * noimage 画像ファイルパスを取得
+     */
+    public static function getNoImageFilePath() {
+        return PATH_ROOT ."/" .SWC_NOIMG_THUMB_PATH;
+    }
     
+    /**
+     * noimage 画像url を取得
+     */
+    public static function getNoImageFileUrl() {
+        // ドメイン名付加する
+        $url = C("esoTalk.baseURL")."/" .SWC_NOIMG_THUMB_PATH;
+        return $url;
+    }
+
 }
