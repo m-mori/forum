@@ -54,7 +54,7 @@ echo starButton($conversation["conversationId"], $conversation["starred"])."\n";
 ?>
 
 <?php if (!ET::$session->user): ?>
-<a href='<?php echo getSwcUrl('login'); ?>' class='button big'><i class="icon-plus"></i> <?php echo T("Post a Reply"); ?></a>
+    <a href='<?php echo SwcUtils::getSwcUrl('login'); ?>' class='button big'><i class="icon-plus"></i> <?php echo T("Post a Reply"); ?></a>
 <?php else: ?>
 <a href='#reply' class='button big' id='jumpToReply'><i class='icon-plus'></i> <?php echo T("Post a Reply"); ?></a>
 <?php endif; ?>
@@ -137,7 +137,7 @@ foreach ($scrubber as $year => $months) {
 // Now, with the last 5 months we pulled out before, output a scrubber item for each of them.
 foreach ($recentMonths as $month) {
 	$selected = ($startFromYear == $currentYear and $startFromMonth == $month) ? " selected" : "";
-	$name = getStrfTime(mktime(0, 0, 0, $month, 1), T("month.full"));
+	$name = SwcUtils::getStrfTime(mktime(0, 0, 0, $month, 1), T("month.full"));
 	$index = $currentYear.str_pad($month, 2, "0", STR_PAD_LEFT);
 	echo "<li class='scrubber-$index$selected' data-index='$index'><a href='".URL(makeURL("$currentYear/$month"))."'>$name</a>";
 	echo "</li>";
@@ -234,7 +234,7 @@ if (!$conversation["canReply"]) {
 			"id" => "reply",
 			"class" => "logInToReply",
 			"title" => "",
-			"body" => sprintf(T("message.logInToReply"), getSwcUrl('login'), getSwcUrl('login')),
+			"body" => sprintf(T("message.logInToReply"), SwcUtils::getSwcUrl('login'), SwcUtils::getSwcUrl('login')),
 			"avatar" => avatar()
 		);
 
