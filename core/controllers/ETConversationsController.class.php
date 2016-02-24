@@ -74,7 +74,9 @@ public function action_index($channelSlug = false)
 	}
 
 	$results = $search->getResults($conversationIDs);
-
+        // 2016/02 一覧サムネイル表示設定
+        $results = $this->addMainThumb($results);
+        
 	// Were there any errors? Show them as messages.
 	if ($search->errorCount()) {
 		$this->messages($search->errors(), "warning dismissable");
@@ -245,6 +247,35 @@ public function action_index($channelSlug = false)
 	}
 }
 
+/**
+ * 一覧データにメイン画像サムネイル表示情報を追加する
+ * @param type $results
+ */
+private function addMainThumb($results) {
+    if (!SWC_MAIN_THUMB_DISPLAY) $results;
+    
+    $atModel = ET::getInstance("attachmentModel");
+    foreach ($results as &$r) {
+        // XXX: 一覧メイン画像サムネイル表示処理
+        // ※下書きには別アイコンが出るので表示しない
+        if (!$r["draft"] && intval($r["countPosts"])>0) {
+            // 下書きでない、投稿カウントありの場合
+            // メイン画像ID取得
+            $attachmentId = $atModel->getMainAttachmentId($r["conversationId"]);
+            $menuImgUrl = "";
+            if ($attachmentId) {
+                // 添付画像あり
+                $menuImgUrl = URL("attachment/menu/".$attachmentId);
+            } else {
+                // デフォルトイメージ画像url
+                $menuImgUrl = SwcUtils::getNoImageFileUrl();
+            }
+            $r["menuImgUrl"] = $menuImgUrl;
+        }
+    }
+    unset($r);
+    return $results;
+}
 
 /**
  * Given the channel slug from a request, work out which channels are selected, whether or not to include
@@ -410,6 +441,9 @@ public function action_update($channelSlug = "", $query = "")
 
 	// Get the full result data for these conversations, and construct an array of rendered conversation rows.
 	$results = $search->getResults($conversationIds, true);
+        // 一覧サムネイル画像表示設定
+        $results = $this->addMainThumb($results);
+        
 	$rows = array();
 	foreach ($results as $conversation) {
 		$rows[$conversation["conversationId"]] = $this->getViewContents("conversations/conversation", array(

@@ -11,6 +11,7 @@ if (!defined("IN_ESOTALK")) exit;
  */
 
 $conversation = $data["conversation"];
+$menuImgUrl = $conversation["menuImgUrl"];
 
 // Work out the class name to apply to the row.
 $className = "channel-".$conversation["channelId"];
@@ -38,8 +39,15 @@ echo "<span class='labels'>";
 foreach ($conversation["labels"] as $label) echo label($label, $label == "draft" ? URL($conversationURL."#reply") : "");
 echo "</span> ";
 
+
 // Output the conversation title, highlighting search keywords.
-echo "<strong class='title'><a href='".URL($conversationURL.((ET::$session->user and $conversation["unread"]) ? "/unread" : ""))."'>".highlight(sanitizeHTML($conversation["title"]), ET::$session->get("highlight"))."</a></strong> ";
+echo "<strong class='title'><a href='".URL($conversationURL.((ET::$session->user and $conversation["unread"]) ? "/unread" : ""))."'>";
+if (SWC_MAIN_THUMB_DISPLAY && $menuImgUrl) {
+    // メニュー画像サムネイル出力
+    echo "<img src='".$menuImgUrl."' width='28' height='20' alt='' title=''>";
+}
+echo highlight(sanitizeHTML($conversation["title"]), ET::$session->get("highlight"))."</a></strong> ";
+
 
 // If we're highlighting search terms (i.e. if we did a fulltext search), then output a "show matching posts" link.
 if (ET::$session->get("highlight"))
