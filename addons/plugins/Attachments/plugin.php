@@ -26,18 +26,35 @@ class ETPlugin_Attachments extends ETPlugin {
             // 2016/01 attachmentテーブルにカラム追加
             // content(mediumblob): 画像バイナリデータ
             // channelId(int): 投稿のチャンネルID
+            // num(int): 投稿ID単位での登録順 ※1: メイン画像
 		$structure = ET::$database->structure();
 		$structure->table("attachment")
 			->column("attachmentId", "varchar(13)", false)
 			->column("filename", "varchar(255)", false)
 			->column("secret", "varchar(13)", false)
 			->column("postId", "int(11) unsigned")
+			->column("num", "int unsigned")
 			->column("draftMemberId", "int(11) unsigned")
 			->column("draftConversationId", "int(11) unsigned")
 			->column("content", "mediumblob", false)
-			->column("channelId", "int(11) unsigned")
+			->column("channelId", "int(11) unsigned", false)
 			->key("attachmentId", "primary")
 			->key("filename")
+			->exec(false);
+
+            // 2016/02 thumbテーブル新規追加
+            // content(mediumblob): 画像バイナリデータ
+		$structure = ET::$database->structure();
+		$structure->table("thumb")
+			->column("thumbId", "varchar(13)", false)
+			->column("postId", "int(11) unsigned", false)
+			->column("type", "tinyint(2)")
+			->column("attachmentId", "varchar(13)")
+			->column("content", "mediumblob", false)
+			->key("thumbId", "primary")
+			->key("postId", "type")
+			->key("postId")
+			->key("attachmentId")
 			->exec(false);
 
 		// Make the uploads/attachments folder, and put in an index.html to prevent directory listing
@@ -75,12 +92,14 @@ class ETPlugin_Attachments extends ETPlugin {
 		 */
 		function formatAttachment($attachment, $expanded = false)
 		{
+                    // TODO: 出力時フォーマット編集
 			$extension = strtolower(pathinfo($attachment["filename"], PATHINFO_EXTENSION));
 			$url = URL("attachment/".$attachment["attachmentId"]."_".$attachment["filename"]);
 			$filename = sanitizeHTML($attachment["filename"]);
 			$displayFilename = ET::formatter()->init($filename)->highlight(ET::$session->get("highlight"))->get();
 
 			// For images, either show them directly or show a thumbnail.
+                        // TODO: サムネイル出力確認
 			if (in_array($extension, array("jpg", "jpeg", "png", "gif"))) {
 				if ($expanded) return "<span class='attachment attachment-image'><img src='".$url."' alt='".$filename."' title='".$filename."'></span>";
 				else return "<a href='".$url."' class='attachment attachment-image' target='_blank'><img src='".URL("attachment/thumb/".$attachment["attachmentId"])."' alt='".$filename."' title='".$filename."'><span class='filename'>".$displayFilename."</span></a>";
@@ -114,8 +133,11 @@ class ETPlugin_Attachments extends ETPlugin {
 	{
 		$sender->addCSSFile($this->resource("fineuploader/fineuploader.css"));
 		$sender->addCSSFile($this->resource("attachments.css"));
-		$sender->addJSFile($this->resource("fineuploader/jquery.fineuploader.js"));
-        $sender->addJSFile($this->resource("attachments.js"));
+// TODO: js、cssファイル読み込み
+// 		$sender->addJSFile($this->resource("fineuploader/jquery.fineuploader.js"));
+		$sender->addJSFile('/forum/' .$this->resource("fineuploader/jquery.fineuploader.js"), "last");
+//                $sender->addJSFile($this->resource("attachments.js"));
+                $sender->addJSFile('/forum/' .$this->resource("attachments.js"), "last");
 		$sender->addJSLanguage("Delete", "Embed in post");
 	}
 
@@ -125,7 +147,7 @@ class ETPlugin_Attachments extends ETPlugin {
 		$model = ET::getInstance("attachmentModel");
 
 		// Clear attachment session data for this conversation.
-		$model->extractFromSession("c".($conversation["conversationId"] ?: "0"));
+		$model->extractFromTemporary("c".($conversation["conversationId"] ?: "0"));
 
 		// Get "draft" attachments for this member/conversation.
 		$sql = ET::SQL()
@@ -140,7 +162,7 @@ class ETPlugin_Attachments extends ETPlugin {
 	public function handler_conversationController_renderEditBox($sender, &$formatted, $post)
 	{
 		// Clear attachment session data for this post.
-		ET::getInstance("attachmentModel")->extractFromSession("p".$post["postId"]);
+		ET::getInstance("attachmentModel")->extractFromTemporary("p".$post["postId"]);
 
 		$this->appendEditAttachments($sender, $formatted, $post["attachments"]);
 	}
@@ -227,9 +249,12 @@ class ETPlugin_Attachments extends ETPlugin {
 	// Hook onto ConversationModel::addReply and commit attachments from the session to the database.
 	public function handler_conversationModel_addReplyAfter($sender, $conversation, $postId, $content)
 	{
+            // TODO: 返信登録時
 		$model = ET::getInstance("attachmentModel");
-		$attachments = $model->extractFromSession("c".$conversation["conversationId"]);
-		if (!empty($attachments)) $model->insertAttachments($attachments, array("postId" => $postId));
+                $conId = $conversation["conversationId"];
+                $channelId = $conversation["channelId"];
+		$attachments = $model->extractFromTemporary("c".$conId, false);
+		if (!empty($attachments)) $model->insertAttachments($attachments, array("postId" => $postId, "conversationId"=>$conId, "channelId"=>$channelId));
 
 		// Update draft attachment entries in the database and assign them to this post.
 		ET::SQL()
@@ -245,26 +270,34 @@ class ETPlugin_Attachments extends ETPlugin {
 	// Hook onto ConversationModel::create and commit attachments from the session to the database.
 	public function handler_conversationModel_createAfter($sender, $conversation, $postId, $content)
 	{
-		$model = ET::getInstance("attachmentModel");
-		$attachments = $model->extractFromSession("c0");
-		if (!empty($attachments)) $model->insertAttachments($attachments, array("postId" => $postId));
+            // 新規テーマ登録時の処理
+            $model = ET::getInstance("attachmentModel");
+            $attachments = $model->extractFromTemporary("c0", false);
+            if (!empty($attachments)) {
+                $keys = array("postId" => $postId, "conversationId"=>$conversation["conversationId"], "channelId"=>$conversation["channelId"]);
+                $model->insertAttachments($attachments, $keys, false, true);
+            }
 	}
 
 	// Hook onto PostModel::editPost and commit attachments from the session to the database.
 	public function handler_postModel_editPostAfter($sender, $post)
 	{
-		$model = ET::getInstance("attachmentModel");
-		$attachments = $model->extractFromSession("p".$post["postId"]);
-		if (!empty($attachments)) $model->insertAttachments($attachments, array("postId" => $post["postId"]));
+            // 編集時の処理
+            $model = ET::getInstance("attachmentModel");
+            $attachments = $model->extractFromTemporary("p".$post["postId"], false);
+            if (!empty($attachments)) {
+                $channelId = $model->getChannelId($post["conversationId"]);
+                $keys = array("postId" => $post["postId"], "conversationId"=>$post["conversationId"], "channelId"=>$channelId);
+                $model->insertAttachments($attachments, $keys, false, $post["mainPostFlg"]);
+            }
 	}
 
 	// Hook onto ConversationModel::setDraft and commit attachments from the session to the database.
 	public function handler_conversationModel_setDraftAfter($sender, $conversation, $memberId, $draft)
 	{
 		$model = ET::getInstance("attachmentModel");
-
-		// Get the attachments for this conversation that are being stored in the session.
-		$attachments = $model->extractFromSession("c".($conversation["conversationId"] ?: 0));
+//		// Get the attachments for this conversation that are being stored in the session.
+//		$attachments = $model->extractFromTemporary("c".($conversation["conversationId"] ?: 0));
 
 		// If we're discarding the draft, remove the attachments from the session/filesystem/database.
 		if ($draft === null) {
@@ -284,18 +317,22 @@ class ETPlugin_Attachments extends ETPlugin {
 				->exec();
 
 			// Delete all attachments (session and database) from the filesystem.
-			$attachments = array_merge($attachments, $dbAttachments);
+                        $attachments = $model->extractFromTemporary("c".($conversation["conversationId"] ?: 0));
+			
+                        $attachments = array_merge($attachments, $dbAttachments);
 			foreach ($attachments as $attachment) {
 				$model->removeFile($attachment);
 			}
-		}
-
-		// If we're saving a draft, commit those attachments from the session to the database.
-		elseif (!empty($attachments)) {
-			$model->insertAttachments($attachments, array(
-				"draftMemberId" => $memberId,
-				"draftConversationId" => $conversation["conversationId"]
-			));
+		} else {
+                    $attachments = $model->extractFromTemporary("c".($conversation["conversationId"] ?: 0));
+                    if (!empty($attachments)) {
+                        // If we're saving a draft, commit those attachments from the session to the database.
+                        $model->insertAttachments($attachments, array(
+                                "draftMemberId" => $memberId,
+                                "draftConversationId" => $conversation["conversationId"]
+                            ), 
+                            true);
+                    }
 		}
 	}
 

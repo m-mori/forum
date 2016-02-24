@@ -123,43 +123,280 @@ class AttachmentModel extends ETModel {
 
 	// Find attachments for a specific post or conversation that are being stored in the session, remove
 	// them from the session, and return them.
-	public function extractFromSession($postId)
+        /**
+         * 一時画像ファイル情報を取得
+         * @param type $postId 
+         * @param type $isDelete (デフォルト: true) 
+         *      true: 取得後、レコード削除
+         *      false: 削除しない
+         * @return type
+         */
+	public function extractFromTemporary($postId, $isDelete=true)
 	{
-		$attachments = array();
-		$session = (array)ET::$session->get("attachments");
-		foreach ($session as $id => $attachment) {
-			if ($attachment["postId"] == $postId) {
-				$attachments[$id] = $attachment;
-				unset($session[$id]);
-			}
-		}
-		ET::$session->store("attachments", $session);
-
-		return $attachments;
-	}
-
-	// Insert attachments in the database.
-	public function insertAttachments($attachments, $keys)
-	{
-		$inserts = array();
-		foreach ($attachments as $id => $attachment) {
-                    $path = $this->path().$id.$attachment["secret"];
-                    $imgFile = file_get_contents($path);
-                    $inserts[] = array_merge(array($id, $attachment["name"], $attachment["secret"], $imgFile), array_values($keys));
+            // DBから取得するように変更
+            $attachments = array();
+            // ログインユーザの sessId
+            $sessId = ET::$session->getSessId();
+            if ($sessId) {
+                if (preg_match('/^p[0-9]+$/', $postId)) {
+                    // "p"から始まる場合 postId
+                    // postId, sessId から一時画像ファイル検索
+                    $where = array(
+                        "postId" => substr($postId, 1), 
+                        "sessId"=>$sessId
+                    );
+                } else if (preg_match('/^c[0-9]+$/', $postId)) {
+                    // "c"から始まる場合 conversationId
+                    // conversationId, sessId から一時画像ファイル検索
+                    $where = array(
+                        "conversationId" => $postId, 
+                        "sessId"=>$sessId
+                    );
                 }
-
-                // 2016/01 画像ファイルはDBへ保存するように修正
-                // et_attachment.content に格納
-		ET::SQL()
-			->insert("attachment")
-			->setMultiple(array_merge(array("attachmentId", "filename", "secret", "content"), array_keys($keys)), $inserts)
-			->exec();
+                $result = $this->get($where);
+                
+                if (is_array($result) && count($result)>0) {
+                    // 一時画像ファイルデータがある場合
+                    foreach ($result as $attachment) {
+                        $id = $attachment["attachmentId"];
+                        $attachments[$id] = $attachment;
+                    }
+                    if ($isDelete) {
+                        // DBから削除
+                        $this->delete($where);
+                    }
+                }
+            }
+            return $attachments;
 	}
 
+        /**
+         * 添付画像ファイル 本登録処理
+         *  ※画像ファイルはDBへ保存するように修正
+         * @param type $attachments
+         * @param type $keys: 本登録時に以下のキー情報を設定する
+         *  ["postId"]
+         *  ["conversationId"]
+         *  ["channelId"]
+         * 
+         */
+	public function insertAttachments($attachments, $keys, $isDraft=false, $mainPostFlg=false)
+	{
+		$values = array();
+                $mainFlg = false;
+		foreach ($attachments as $id => $attachment) {
+                    if (!$isDraft) {
+                        // 本登録処理 sessId= null にする
+                        $values = array(
+                            "postId" => $keys["postId"],
+                            "conversationId" => $keys["conversationId"],
+                            "sessId" => null,
+                            "channelId" => $keys["channelId"],
+                        );
+                        if (!$mainFlg) {
+                            // メイン画像存在チェック
+                            $mainFlg = $this->getCountByPostId($keys["postId"], $keys["conversationId"]);
+                            if ($mainFlg===0) {
+                                // 0件の場合 main= 1を設定する
+                                $values["main"]=1;
+                                $mainFlg = 1;
+                                
+                                if ($mainPostFlg) {
+                                    // 新規会話作成の場合
+                                    // サムネイル画像登録 
+                                    $this->createThumb($attachment, $keys["postId"], 1);
+                                }
+                            }
+                        }
+                        
+                    } else {
+                        // 下書き登録の場合
+                        $values = array(
+                            "postId" => null,
+                            "conversationId" => null,
+                            "draftConversationId" => $keys["draftConversationId"],
+                            "draftMemberId" => $keys["draftMemberId"],
+                            "sessId" => null,
+                        );
+                        
+                    }
+                    // PKで更新
+                    $this->updateById($id, $values);
+                }
+                
+                // DB登録後 uploadsフォルダ内の一時ファイル削除
+		foreach ($attachments as $id => $attachment) {
+                    $this->removeFile($attachment);
+                }
+	}
+
+        /**
+         * サムネイル情報取得
+         * @param type $id
+         * @return type
+         */
+        public function getThumb($id) {
+            $result = "";
+            if ($id) {
+                $result = ET::SQL()
+                    ->select("*")
+                    ->from("thumb")
+                    ->where("thumbId", $id)
+                    ->exec()
+                    ->firstRow();
+            }
+            return $result;
+        }
+
+        /**
+         * 投稿IDでメイン画像サムネイル取得
+         *  基本的には投稿IDでユニーク
+         * @param type $postId
+         * @return type
+         */
+        public function getThumbByPostId($postId) {
+            $result = "";
+            if ($postId) {
+                $result = ET::SQL()
+                    ->select("*")
+                    ->from("thumb")
+                    ->where("postId", $postId)
+                    ->where("type", 1)
+                    ->exec()
+                    ->firstRow();
+            }
+            return $result;
+        }
+        
+        /**
+         * サムネイル画像登録
+         * @param type $attachment
+         * @param type $type
+         */
+        public function createThumb($attachment, $postId, $type) {
+            $uploader = ET::uploader();
+            // 一時ファイルパス取得
+            $srcPath = $this->getTempFileName($attachment);
+            $thumbPath = $this->getThumbFileName($srcPath);
+            
+            // サムネイル画像生成
+            $thumb = $uploader->saveAsImage($srcPath, $thumbPath, SWC_IMG_THUMB_W, SWC_IMG_THUMB_H, "crop");
+            $imgFile = file_get_contents($thumb);
+            
+            // type= 1: メイン画像
+            $entity = array(
+                "thumbId"=>$attachment["attachmentId"],
+                "postId"=>$postId,
+                "type"=>$type,
+                "attachmentId"=>$attachment["attachmentId"],
+                "content"=>$imgFile,
+            );
+            
+            ET::SQL()->insert("thumb")
+                    ->set("thumbId", $attachment["attachmentId"])
+                    ->set("postId", $postId)
+                    ->set("type", $type)
+                    ->set("attachmentId", $attachment["attachmentId"])
+                    ->set("content", $imgFile)
+                    ->exec();
+        }
+        
+        public function getTempFileName($attachment) {
+            $ext = strtolower(pathinfo($attachment["filename"], PATHINFO_EXTENSION));
+            if ($ext != "gif") {
+                $ext = "jpg";
+            }
+            return $this->path().$attachment["attachmentId"].$attachment["secret"].".".$ext; 
+        }
+        
+        /**
+         * サムネイル用ファイル名取得
+         * @param type $srcPath
+         * @return string
+         */
+        public function getThumbFileName($srcPath) {
+            $pathData = pathinfo($srcPath);
+            $thumbPath = $pathData["dirname"]."/".$pathData["filename"] ."_thumb." .$pathData["extension"];
+            return $thumbPath; 
+        }
+        
+        /**
+         * upload/attachments 配下の一時ファイル削除
+         * @param type $attachment
+         */
 	public function removeFile($attachment)
 	{
-		@unlink($this->path().$attachment["attachmentId"].$attachment["secret"]);
-		@unlink($this->path().$attachment["attachmentId"].$attachment["secret"]."_thumb");
+            $path = $this->getTempFileName($attachment);
+            if (file_exists($path)) {
+		@unlink($path);
+            }
+            // サムネイルファイル名
+            $thumbPath= $this->getThumbFileName($path);
+            if (file_exists($thumbPath)) {
+		@unlink($thumbPath);
+            }
 	}
+        
+        /**
+         * 投稿ID,会話IDでメイン画像存在するかどうか取得
+         * @param type $conversationId
+         * @param type $postId
+         */
+        public function getCountByPostId($postId, $conversationId) {
+            if ($conversationId && $postId) {
+            // conversationId, sessId から一時画像ファイル検索
+                $where = array(
+                    "conversationId" => $conversationId,
+                    "postId" => $postId, 
+                    "main"=>1
+                );
+                $cnt = intval($this->count($where));
+            }
+            return $cnt;
+        }
 
+        /**
+         * 会話IDから対応するテーマ（スレッド）のチャンネルIDを取得
+         * @param type $conversationId
+         * @return type
+         */
+        public function getChannelId($conversationId) {
+            $channelId = "";
+            if ($conversationId) {
+                $conModel = ET::conversationModel();
+                $result = ET::SQL()
+                        ->select("channelId")
+                        ->from("conversation")
+                        ->where("conversationId", $conversationId)
+                        ->exec()
+                        ->firstRow();
+                if ($result) {
+                    $channelId = $result["channelId"];
+                }
+            }
+            return $channelId;
+        }
+
+    /**
+     * 会話IDからメイン画像が存在する投稿IDを取得する
+     *  下書き投稿ではない、会話IDを指定すること
+     * @param type $conversationId
+     */
+    public function getMainAttachmentId($conversationId) {
+        $attachmentId = "";
+        if ($conversationId) {
+            $result = ET::SQL()
+                ->select("attachmentId") 
+                ->from("attachment a")
+                ->from("post p", "p.postId=a.postId AND p.mainPostFlg=1 AND a.main=1 AND p.conversationId=:conversationId", "inner")
+                ->bind(":conversationId", intval($conversationId))
+                ->exec()
+                ->firstRow();
+            if ($result) {
+                $attachmentId = $result["attachmentId"];
+            }
+        }
+        return $attachmentId;
+    }
+        
 }

@@ -6,6 +6,8 @@ if (!defined("IN_ESOTALK")) exit;
 
 class AttachmentController extends ETController {
 
+    static $file_key = "qqfile";
+    
 	protected function getAttachment($attachmentId)
 	{
 		// Find the attachment in the database.
@@ -54,51 +56,6 @@ class AttachmentController extends ETController {
                     echo $img;
                     exit;
                 }
-//                
-//		// Serve up the file.
-//		$path = $model->path().$attachmentId.$attachment["secret"];
-//		$file = @fopen($path, 'rb');
-//		$speed = 1024;
-//
-//		if (is_resource($file) === true) {
-//			$size = sprintf('%u', filesize($path));
-//
-//			set_time_limit(0);
-//
-//			// Close the session so the user can still make other requests while this is happening.
-//			if (strlen(session_id()) > 0) session_write_close();
-//
-//			$range = array(0, $size - 1);
-//
-//			// Don't really understand how this code works, tbh.
-//			// From: http://stackoverflow.com/a/7591130
-//			if (array_key_exists('HTTP_RANGE', $_SERVER) === true) {
-//				$range = array_map('intval', explode('-', preg_replace('~.*=([^,]*).*~', '$1', $_SERVER['HTTP_RANGE'])));
-//				if (empty($range[1]) === true) $range[1] = $size - 1;
-//				foreach ($range as $key => $value) $range[$key] = max(0, min($value, $size - 1));
-//				if (($range[0] > 0) || ($range[1] < ($size - 1)))
-//					header(sprintf('%s %03u %s', 'HTTP/1.1', 206, 'Partial Content'), true, 206);
-//			}
-//
-//			header('Accept-Ranges: bytes');
-//			header('Content-Range: bytes ' . sprintf('%u-%u/%u', $range[0], $range[1], $size));
-//
-//			header('Pragma: public');
-//			header('Cache-Control: public, no-cache');
-//			header('Content-Type: '.$model->mime($attachment["filename"]));
-//			header('Content-Length: ' . sprintf('%u', $range[1] - $range[0] + 1));
-//			header('Content-Disposition: inline; filename="' . basename($attachment["filename"]) . '"');
-//			header('Content-Transfer-Encoding: binary');
-//
-//			if ($range[0] > 0) fseek($file, $range[0]);
-//
-//			while ((feof($file) !== true) && (connection_status() === CONNECTION_NORMAL))
-//				echo fread($file, round($speed * 1024)); flush();
-//
-//			fclose($file);
-//			exit;
-//		}
-
 		else {
 			$this->render404(T("message.attachmentNotFound"), true);
 			return false;
@@ -108,69 +65,170 @@ class AttachmentController extends ETController {
 	// Generate/view a thumbnail of an image attachment.
 	public function action_thumb($attachmentId = false)
 	{
-		if (!($attachment = $this->getAttachment($attachmentId))) return;
+            if (!($attachment = $this->getAttachment($attachmentId))) return;
 
-		$model = ET::getInstance("attachmentModel");
-		$path = $model->path().$attachmentId.$attachment["secret"];
-		$thumb = $path."_thumb";
-
-		if (!file_exists($thumb)) {
-			try {
-				$uploader = ET::uploader();
-				$thumb = $uploader->saveAsImage($path, $thumb, 200, 150, "crop");
-				$newThumb = substr($thumb, 0, strrpos($thumb, "."));
-				rename($thumb, $newThumb);
-				$thumb = $newThumb;
-			} catch (Exception $e) {
-				return;
-			}
-		}
-
-		header('Content-Type: '.$model->mime($attachment["filename"]));
-		echo file_get_contents($thumb);
+            $img = "";
+            // 画像IDでサムネイル検索
+            $model = $this->getAttachmentModel();
+            $thumb = $model->getThumb($attachment["attachmentId"]);
+            if (is_array($thumb) && $thumb["content"]) {
+                // サムネイル画像有り
+                $img = $thumb["content"];
+            }
+            // TODO: メインだがサムネイル画像なしの場合
+            if ($img) {
+                $size = strlen($img);
+                header('Content-Type: '.$model->mime($attachment["filename"]));
+                if ($size) header('Content-Length: ' . $size);
+                echo file_get_contents($img);
+                exit;
+            } else {
+                $this->render404(T("message.attachmentNotFound"), true);
+                return false;
+            }
+	}
+        
+        /**
+         * XXX: 追加
+         * 一覧表示用のテーマメインサムネイル画像を取得
+         * @param type $postId
+         * @return boolean
+         */
+	public function action_menu($id = false)
+	{
+            if ($id) {
+                $model = $this->getAttachmentModel();
+                $attachment = $model->getById($id);
+                $thumb = $model->getThumb($id);
+                
+                // デフォルトのメイン画像設定
+                // NOイメージ用ファイル
+                $img = "";
+                $noimagePath = SwcUtils::getNoImageFilePath();
+                $filename = pathinfo($noimagePath, PATHINFO_BASENAME);
+                
+                // TODO: メイン画像はあるが、サムネ画像がない場合の処理
+                if (is_array($thumb) 
+                    && $thumb["content"]
+                    && is_array($attachment)) {
+                    // サムネイル画像有り
+                    $img = $thumb["content"];
+                    $filename=$attachment["filename"];
+                } else {
+                    // 画像がない投稿の場合 ノーイメージ読込
+                    $img = file_get_contents($noimagePath);
+                }
+                if ($img) {
+                    $size = strlen($img);
+                    header('Content-Type: '.$model->mime($filename));
+                    if ($size) header('Content-Length: ' . $size);
+                    header('Content-Transfer-Encoding: binary');
+                    echo $img;
+                    exit;
+                } else {
+                    $this->render404(T("message.attachmentNotFound"), false);
+                    return false;
+                }
+            }
 	}
 
+        /**
+         * 添付画像ファイルアップロード処理
+         *  ※DBへ保存するように処理修正
+         */
 	// Upload an attachment.
 	public function action_upload()
 	{
-		require_once 'qqFileUploader.php';
-		$uploader = new qqFileUploader();
-		$uploader->inputName = 'qqfile';
-
+//		require_once 'qqFileUploader.php';
+//		$uploader = new qqFileUploader();
+//		$uploader->inputName = 'qqfile';
+                
+                // 管理画面で設定されたファイル拡張子（画像のみ）
 		// Set the allowed file types based on config.
 		$allowedFileTypes = C("plugin.Attachments.allowedFileTypes");
-		if (!empty($allowedFileTypes))
-			$uploader->allowedExtensions = $allowedFileTypes;
+//		if (!empty($allowedFileTypes))
+//			$uploader->allowedExtensions = $allowedFileTypes;
 
+                // 管理画面で設定されたMAXサイズ（デフォルト: 25MB）
 		// Set the max file size based on config.
-		if ($size = C("plugin.Attachments.maxFileSize"))
-			$uploader->sizeLimit = $size;
+                $maxSize = C("plugin.Attachments.maxFileSize");
+//		if ($size = C("plugin.Attachments.maxFileSize"))
+//			$uploader->sizeLimit = $size;
 
-		// Generate a unique ID and secret for this attachment.
-		$attachmentId = uniqid();
-		$secret = generateRandomString(13, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");
-		$name = $uploader->getName();
-
-		// Save it to the filesystem.
-		$model = ET::getInstance("attachmentModel");
-		$result = $uploader->handleUpload($model->path(), $attachmentId.$secret);
-
-		if (!empty($result["success"])) {
-
-			$result["uploadName"] = $uploader->getUploadName();
-			$result["attachmentId"] = $attachmentId;
-
-			// Save attachment information to the session.
-			$session = (array)ET::$session->get("attachments");
-			$session[$attachmentId] = array(
-				"attachmentId" => $attachmentId,
-				"postId" => R("postId"),
-				"name" => $name,
-				"secret" => $secret
-			);
-			ET::$session->store("attachments", $session);
-
-		}
+                $model = $this->getAttachmentModel();
+                $id = "";
+                try {
+                    // アップロード処理
+                    $attachmentId="";
+                    $uploader = ET::uploader();
+                    $filepath = $uploader->getUploadedFile(self::$file_key, $allowedFileTypes);
+                    if (file_exists($filepath)) {
+                        // ファイルサイズチェック
+                        $size = filesize($filepath);
+                        if ($size>$maxSize) {
+                            // TODO: サイズ超過 エラー時
+                        }
+                        // 元ファイル名
+                        $name = $_FILES[self::$file_key]["name"];
+                        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                        if ($ext != "gif") {
+                            // gif 以外はjpg で保存
+                            $ext = "jpg";
+                        }
+                        // ファイル名
+                        $baseName = pathinfo($name, PATHINFO_BASENAME);
+//                        $baseName = pathinfo($filepath, PATHINFO_FILENAME) .$ext;
+                        $attachmentId = SwcUtils::createUniqKey(13);
+                        // ランダム文字列
+                        $secret = generateRandomString(13, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");
+                        // 保存先ファイルパス
+                        $destPath = $model->path() .$attachmentId .$secret ."." .$ext;
+                        // MAX値超過する場合 リサイズする
+                        $outputFile = $uploader->saveAsImage($filepath, $destPath, SWC_IMG_MAX_W, SWC_IMG_MAX_H);
+                        
+                        // 画像データ
+                        $imgFile = file_get_contents($outputFile);
+                        
+                        // エンティティ設定
+                        $entity = array(
+                            "attachmentId"=>$attachmentId,
+                            "filename"=>$baseName,
+                            "secret"=>$secret,
+                            "content"=>$imgFile,
+                        );
+                        $paramPostId = R("postId");
+                        if (preg_match('/^p[0-9]+$/', $paramPostId)) {
+                            // postID がある場合 "p"から始まる
+                            // "p"を除去して登録
+                            $entity["postId"] = substr($paramPostId, 1);
+                        } else if (preg_match('/^c[0-9]+$/', $paramPostId)) {
+                            // 会話ID を設定 "c"から始まる
+                            // 新規の場合、"c0"が設定されている
+                            // アップロード時は"c" を付けたまま一時登録する
+                            $entity["conversationId"]= $paramPostId;
+                        }
+                        // sessId取得
+                        $sessId = ET::$session->getSessId();
+                        $entity["sessId"] = $sessId;
+                        
+                        $model->create($entity, false);
+                    }
+                        
+                } catch (Exception $e) {
+                    // TODO:
+                    return;
+                }
+                 
+                $result = array();
+		if ($attachmentId) {
+                    // OK の場合
+                    $result["success"] = 1;
+                    $result["uploadName"] = $baseName;
+                    $result["attachmentId"] = $attachmentId;
+		} else {
+                    // NG
+                    $result["success"] = 0;
+                }
 
 		header("Content-Type: text/plain");
 		echo json_encode($result);
@@ -181,40 +239,38 @@ class AttachmentController extends ETController {
 	{
 		if (!$this->validateToken()) return;
 
-		$session = (array)ET::$session->get("attachments");
+//		$session = (array)ET::$session->get("attachments");
 		$model = ET::getInstance("attachmentModel");
 
-		if (isset($session[$attachmentId])) {
-			$attachment = $session[$attachmentId];
-			unset($session[$attachmentId]);
-			ET::$session->store("attachments", $session);
-		}
+                $attachment = $model->getById($attachmentId);
+                $sessId = ET::$session->getSessId();
+                if (is_array($attachment) && count($attachment)>0) {
+                    // Make sure the user has permission to edit this post.
+                    $permission = false;
+                    if (!empty($attachment["postId"])) {
+                        $post = ET::postModel()->getById($attachment["postId"]);
+                        $conversation = ET::conversationModel()->getById($post["conversationId"]);
+                        $permission = ET::postModel()->canEditPost($post, $conversation);
+                    } else {
+                        if ($attachment["sessId"]==$sessId) {
+                            $permission = true;
+                        } else {
+                            $permission = ET::$session->userId == $attachment["draftMemberId"];
+                        }
+                    }
 
-		else {
-			$attachment = $model->getById($attachmentId);
+                    if (!$permission) {
+                            $this->renderMessage(T("Error"), T("message.noPermission"));
+                            return false;
+                    }
 
-			// Make sure the user has permission to edit this post.
-			$permission = false;
-			if (!empty($attachment["postId"])) {
-				$post = ET::postModel()->getById($attachment["postId"]);
-				$conversation = ET::conversationModel()->getById($post["conversationId"]);
-				$permission = ET::postModel()->canEditPost($post, $conversation);
-			}
-			else {
-				$permission = ET::$session->userId == $attachment["draftMemberId"];
-			}
+                    // Remove the attachment from the database.
+                    $model->deleteById($attachmentId);
 
-			if (!$permission) {
-				$this->renderMessage(T("Error"), T("message.noPermission"));
-				return false;
-			}
-
-			// Remove the attachment from the database.
-			$model->deleteById($attachmentId);
-		}
-
-		// Remove the attachment from the filesystem.
-		$model->removeFile($attachment);
+                    // Remove the attachment from the filesystem.
+                    $model->removeFile($attachment);
+                
+                }
 	}
 
 	// Remove attachments stored in the session for a specific post.
@@ -223,10 +279,14 @@ class AttachmentController extends ETController {
 		if (!$this->validateToken()) return;
 
 		$model = ET::getInstance("attachmentModel");
-		$attachments = $model->extractFromSession("p".$postId);
+		$attachments = $model->extractFromTemporary("p".$postId);
 		foreach ($attachments as $attachment) {
 			$model->removeFile($attachment);
 		}
 	}
+        
+        private function getAttachmentModel() {
+            return ET::getInstance("attachmentModel");
+        }
 
 }

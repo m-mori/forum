@@ -3,9 +3,13 @@
 // This file is part of esoTalk. Please see the included license file for usage information.
 
 if (!defined("IN_ESOTALK")) exit;
-
+$cnt = 0;
+if (!empty($data["attachments"])) {
+    $cnt = count($data["attachments"]);
+}
 ?>
 <div class='attachments-edit<?php if (!empty($data["attachments"])): ?> has-attachments<?php endif; ?>'>
+    <input type="hidden" class="imgCount" value="<?php echo $cnt; ?>" />
 	<ul>
 		<?php foreach ($data["attachments"] as $attachment): ?>
 		<li id='attachment-<?php echo $attachment["attachmentId"]; ?>'>
@@ -17,7 +21,9 @@ if (!defined("IN_ESOTALK")) exit;
 		</li>
 		<?php endforeach; ?>
 	</ul>
-
+        
+    <small><?php echo T("label.max.image.files"); ?></small>
+    
 	<a class='attachments-button'><i class="icon-paper-clip"></i> <?php echo T("Attach a file"); ?></a>
 </div>
 
