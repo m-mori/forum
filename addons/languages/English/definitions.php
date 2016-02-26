@@ -25,6 +25,7 @@ $definitions["Ignore conversation"] = "Ignore conversation";
 $definitions["Unignore conversation"] = "Unignore conversation";
 
 $definitions["label.max.image.files"] = "(The image file up to 4)";
+$definitions["message.noTagsResults"] = "No tags matching your search were found.";
 ///////////////////////////////////////////////////////////
 
 $definitions["%d day ago"] = "yesterday";
@@ -334,7 +335,7 @@ $definitions["Reset"] = "Reset";
 
 $definitions["Save Changes"] = "Save Changes";
 $definitions["Save Draft"] = "Save Draft";
-$definitions["Search conversations..."] = "Search conversations...";
+$definitions["Search conversations..."] = "Keyword Search";
 $definitions["Search within this conversation..."] = "Search within this conversation...";
 $definitions["Search"] = "Search";
 $definitions["See the private conversations I've had with %s"] = "See the private conversations I've had with %s";

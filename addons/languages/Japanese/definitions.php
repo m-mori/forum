@@ -22,6 +22,7 @@ $definitions["Ignore conversation"] = "Ignore 設定する";
 $definitions["Unignore conversation"] = "Ignore 解除する";
 
 $definitions["label.max.image.files"] = "(画像ファイルは最大4件まで)";
+$definitions["message.noTagsResults"] = "一致するタグはありません。";
 ///////////////////////////////////////////////////////////
 
 $definitions["%d day ago"] = "昨日";
@@ -331,7 +332,7 @@ $definitions["Reset"] = "リセット";
 
 $definitions["Save Changes"] = "変更を保存";
 $definitions["Save Draft"] = "下書きを保存";
-$definitions["Search conversations..."] = "トピックを検索";
+$definitions["Search conversations..."] = "キーワード検索";
 $definitions["Search within this conversation..."] = "検索";
 $definitions["Search"] = "検索";
 $definitions["See the private conversations I've had with %s"] = "See the private conversations I've had with %s";

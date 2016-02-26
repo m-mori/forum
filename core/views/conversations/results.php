@@ -10,16 +10,21 @@ if (!defined("IN_ESOTALK")) exit;
  *
  * @package esoTalk
  */
+// タグ一覧ページかどうか（false: 詳細ページ）
+$isTagSearch = $data["isTagSearch"];
 
 // If there are no conversations, show a message.
 if (!$data["results"]): ?>
 <div class='area noResults help'>
+<?php if ($isTagSearch): //タグ検索一覧の場合  ?>
+<h4><?php echo T("message.noTagsResults"); ?></h4>
+
+<?php else: ?>
 <h4><?php echo T("message.noSearchResults"); ?></h4>
 <ul>
 <li><?php echo T("message.reduceNumberOfGambits"); ?></li>
-<?php if (!ET::$session->user): ?><li><?php echo T("message.logInToSeeAllConversations"); ?></li><?php endif; ?>
-<li><?php echo T("message.fulltextKeywordWarning"); ?></li>
 </ul>
+<?php endif; ?>
 </div>
 
 <?php
