@@ -275,7 +275,7 @@ public function init()
 		// If the user IS NOT logged in, add the 'login' and 'sign up' links to the bar.
 		if (!ET::$session->user) {
                         // 1/28 リンク先変更 SWC新規登録ページへ
-			$this->addToMenu("user", "join", "<a href='".URL(getSwcUrl("entry") ."?return=".urlencode($this->selfURL))."' class='link-join'>".T("Sign Up")."</a>");
+			$this->addToMenu("user", "join", "<a href='".URL(SwcUtils::getSwcUrl("entry") ."?return=".urlencode($this->selfURL))."' class='link-join'>".T("Sign Up")."</a>");
                         // 1/28 リンク先変更 SWCログインページへ
 			$this->addToMenu("user", "login", "<a href='/login/index.php' class='link-login'>".T("Log In")."</a>");
 		}
@@ -289,7 +289,7 @@ public function init()
 			if (ET::$session->isAdmin())
 				$this->addToMenu("user", "administration", "<a href='".URL("admin")."' class='link-administration'>".T("Administration")."</a>");
 
-                        // TODO: 1/28 リンク先変更 ログアウト
+                        // リンク先変更 ログアウト
 			$this->addToMenu("user", "logout", "<a href='".URL("user/logout?token=".ET::$session->token)."' class='link-logout'>".T("Log Out")."</a>");
 		}
 
@@ -403,7 +403,7 @@ public function data($key, $value)
  * 		doesn't require a view, such as JSON or ATOM.
  * @return void
  */
-public function render($view = "")
+public function render($view = "", $addView="")
 {
 	$this->trigger("renderBefore");
 
@@ -432,6 +432,10 @@ public function render($view = "")
 		// If it's an AJAX response, set one of the JSON parameters to the specified view's contents.
 		case RESPONSE_TYPE_AJAX:
 			if ($view) $this->json("view", $this->getViewContents($view, $this->data));
+                        // add 2016/02 タグ更新反映用
+                        if ($addView == "conversation/tagsPath") {
+                            $this->json("tags", $this->getViewContents($addView, $this->data));
+                        }
 
 		case RESPONSE_TYPE_JSON:
 			$this->masterView = "json.master";

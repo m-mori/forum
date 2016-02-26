@@ -666,14 +666,14 @@ restorePost: function(postId) {
 
 /**
  * SNSボタンエリアの表示切替
- * @param {type} $snsArea JQObject
+ * @param {type} objSnsArea JQObject
  * @returns {undefined}
  */
-switchDisplaySnsArea: function (strSnsArea, flg) {
+switchDisplaySnsArea: function (objSnsArea, flg) {
     if (flg) {
-        $(strSnsArea).css("display", "none");
+        objSnsArea.css("display", "none");
     } else {
-        $(strSnsArea).css("display", "block");
+        objSnsArea.css("display", "block");
     }
 },
 
@@ -683,7 +683,7 @@ editPost: function(postId) {
 	$.hideToolTip();
 	var post = $("#p" + postId);
         // 2016/02 SNSエリア
-        var strSnsArea = "#p" + postId + " .postSnsArea";
+        var objSnsArea = ETConversation.getSnsArea(postId);
         
 	$.ETAjax({
 		url: "conversation/editPost.ajax/" + postId,
@@ -698,7 +698,7 @@ editPost: function(postId) {
 			if (data.messages || data.modalMessage) return;
 			ETConversation.updateEditPost(postId, data.view);
                         // 編集モード時 SNSエリア非表示
-                        ETConversation.switchDisplaySnsArea(strSnsArea, 1);
+                        ETConversation.switchDisplaySnsArea(objSnsArea, 1);
 		}
 	});
 },
@@ -758,6 +758,23 @@ updateEditPost: function(postId, html) {
 	});
 },
 
+/**
+ * 前後の空白除去する
+ * @returns {undefined}
+ */
+trimText: function(str) {
+    return str.replace(/^\s+|\s+$/g, "");
+},
+
+/**
+ * SNSエリアを取得する
+ * @param {type} postId
+ * @returns {jQuery}
+ */
+getSnsArea: function (postId) {
+    return $("#p"+postId).next(".postSnsArea");
+},
+
 // Save an edited post to the database.
 saveEditPost: function(postId, content) {
 
@@ -765,21 +782,30 @@ saveEditPost: function(postId, content) {
 	var post = $("#p" + postId);
 	$(".button", post).disable();
         // SNS エリア
-        var strSnsArea = "#p" + postId + " .postSnsArea";
+        var objSnsArea = ETConversation.getSnsArea(postId);
+        // タグエリア
+        var tags = new Array();
+        var tagsFlg = false;
+        post.find(".postTagsArea input.postTag").each(function (idx, elm){
+            // タグフラグ設定
+            tagsFlg = true;
+            var str = ETConversation.trimText($(elm).val());
+            if (str) {
+                tags.push(str);
+            }
+        });
 
 	// Make the ajax request.
 	$.ETAjax({
 		url: "conversation/editPost.ajax/" + postId,
 		type: "post",
-		data: {content: content, save: true},
+		data: {content: content, save: true, tags: tags, conid: ETConversation.id},
 		beforeSend: function() {
 			createLoadingOverlay("p" + postId, "p" + postId);
 		},
 		complete: function() {
 			hideLoadingOverlay("p" + postId, true);
 			$(".button", post).enable();
-                        // SNSエリア表示
-                        ETConversation.switchDisplaySnsArea(strSnsArea, false);
 		},
 		success: function(data) {
 			if (data.messages) return;
@@ -789,16 +815,23 @@ saveEditPost: function(postId, content) {
 			// Replace the post HTML with the new post we just got.
 			post.replaceWith(data.view);
 			var newPost = $("#p" + postId);
-
+                        
 			// Animate the post's height.
 			var newHeight = $(".postContent", newPost).height();
 			$(".postContent", newPost).height(startHeight).animate({height: newHeight}, "fast", function() {
 				$(this).height("");
 			});
-
+                        
+                        if (data.tags) {
+                            // タグリストの表示更新
+                            $("#tagsList").replaceWith(data.tags);
+                        }
+                        
 			ETConversation.editingPosts--;
 			ETConversation.redisplayAvatars();
 			ETConversation.initPost(newPost);
+                        // SNSエリア表示
+                        ETConversation.switchDisplaySnsArea(objSnsArea, false);
 		}
 	});
 },
@@ -822,8 +855,8 @@ cancelEditPost: function(postId) {
 	});
 
         // SNSエリア表示
-	var strSnsArea = "#p" + postId + " .postSnsArea";
-        ETConversation.switchDisplaySnsArea(strSnsArea, false);
+	var objSnsArea = ETConversation.getSnsArea(postId);
+        ETConversation.switchDisplaySnsArea(objSnsArea, false);
 
 	ETConversation.initPost(newPost);
 

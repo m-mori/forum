@@ -173,13 +173,23 @@ public function action_index($conversationId = false, $year = false, $month = fa
 	$this->data("posts", $posts);
 	$this->data("startFrom", $startFrom);
 	$this->data("searchString", $searchString);
+        
+        // 初期表示フラグ
+        $this->data("isInit", 1);
 
+        // XXX: 2016/02 IDに対応するタグ情報を取得
+        if ($conversation["countPosts"] >0) {
+            // 下書きでない場合 タグ出力する
+            $tagsInfo = ET::tagsModel()->getTagsInfo($conversationId);
+            $this->data("tags", $tagsInfo);
+        }
+        
 	if ($this->responseType === RESPONSE_TYPE_DEFAULT) {
 
 		// Construct a canonical URL to this page.
 		$url = conversationURL($conversation["conversationId"], $conversation["title"])."/$startFrom".($searchString ? "?search=".urlencode($searchString) : "");
 		$this->canonicalURL = URL($url, true);
-                // TODO: slug 確認
+                // XXX: slug 確認
 		// If the slug in the URL is not the same as the actual slug, redirect.
 		$slug = slug($conversation["title"]);
 		if ($slug and (strpos($conversationId, "-") === false or substr($conversationId, strpos($conversationId, "-") + 1) != $slug)) {
@@ -315,7 +325,7 @@ public function action_index($conversationId = false, $year = false, $month = fa
 		$this->data("controlsMenu", $controls);
                 
                 if (SWC_LIKE_BTN) {
-                    // FIXME: 2016/02 独自いいねボタン表示対象の場合
+                    // XXX: 2016/02 独自いいねボタン表示対象の場合
                     // css, js ファイル追加
                     $this->addCSSFile("/forum/core/button/css/button.css", "remote");
                     // alax ファイルより後に読込み要
@@ -370,7 +380,6 @@ public function action_start($member = false)
 	$channelId = $form->validPostBack("content") ? ET::$session->get("channelId") : ET::$session->get("searchChannelId");
 	ET::$session->store("channelId", isset($channels[$channelId]) ? $channelId : reset(array_keys($channels)));
 
-        // TODO: タグ入力 会話作成処理
 	// Get an empty conversation.
 	$model = ET::conversationModel();
 	$conversation = $model->getEmptyConversation();
@@ -378,6 +387,9 @@ public function action_start($member = false)
 	$conversation["membersAllowedSummary"] = $model->getMembersAllowedSummary($conversation, $conversation["membersAllowed"]);
 	$conversation["channelPath"] = $model->getChannelPath($conversation);
 
+        // XXX: タグ入力エリア設定 新規作成フラグ設定
+	$this->data("isStartFlg", 1);
+        
 	if ($this->responseType === RESPONSE_TYPE_DEFAULT) {
 
 		$this->title = T("New conversation");
@@ -453,6 +465,37 @@ public function action_start($member = false)
 	$this->render("conversation/edit");
 }
 
+/**
+ * タグ入力エリアを取得
+ * @return string
+ */
+protected function getTagsArea($form) {
+    // 会話開始フラグ
+    $isStartFlg = $this->data["isStartFlg"];    
+    $mainFlg = $this->data["post"]["mainPostFlg"];
+    $conversationId = $this->data["post"]["conversationId"];
+    $str = "";
+    // 新規会話かメインの投稿の場合
+    if ($isStartFlg || $mainFlg){
+        $tagsInfo = $this->data["tags"];
+        if ($conversationId && !$tagsInfo){
+            // 既存タグ情報取得
+            $tagsInfo = ET::tagsModel()->getTagsInfo($conversationId);
+        }
+        $str .= "<div class='postTagsArea'><div>10個までタグ付けすることができます。</div>";
+        for($i=0;$i<10;$i++){
+            // タグ入力10個まで
+            $name = "tag" .$i;
+            $attr = array("class" => "postTag", "maxlength" => "100");
+            if ($tagsInfo[$i]) {
+                $attr["value"]=$tagsInfo[$i]["tagText"];
+            }
+            $str .= $form->input($name, "text", $attr);
+        }
+        $str .= '</div>';
+    }
+    return $str;
+}
 
 /**
  * Redirect to show a specific post within its conversation.
@@ -1183,7 +1226,11 @@ public function action_editPost($postId = false)
 
 		ET::postModel()->editPost($post, $form->getValue("content"));
 
+                // タグ情報の更新処理
+		ET::tagsModel()->editPost($post, $form->getValue("tags"));
+
 		$this->trigger("editPostAfter", array(&$post));
+                $mainPostFlg = $post["mainPostFlg"];
 
 		// Normally, redirect back to the conversation.
 		if ($this->responseType === RESPONSE_TYPE_DEFAULT) {
@@ -1193,7 +1240,11 @@ public function action_editPost($postId = false)
 		// For an AJAX request, render the post view.
 		elseif ($this->responseType === RESPONSE_TYPE_AJAX) {
 			$this->data("post", $this->formatPostForTemplate($post, $post["conversation"]));
-			$this->render("conversation/post");
+                        if ($mainPostFlg) {
+                            // タグリスト出力用
+                            $this->data("tags", ET::tagsModel()->getTagsInfo($post["conversationId"]));
+                        }
+			$this->render("conversation/post", "conversation/tagsPath");
 			return;
 		}
 
@@ -1299,7 +1350,7 @@ protected function formatPostForTemplate($post, $conversation)
 			"memberid" => $post["memberId"]
 		)
 	);
-
+        
         // いいね済みフラグ
         $formatted["liked"] = $post["likeActivityId"] ? 1 : "";
         

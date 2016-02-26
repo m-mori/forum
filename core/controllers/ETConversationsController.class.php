@@ -19,7 +19,7 @@ class ETConversationsController extends ETController {
  *
  * @return void
  */
-public function action_index($channelSlug = false)
+public function action_index($channelSlug = false, $tagText = false)
 {
 	if (!$this->allowed()) return;
 	
@@ -65,7 +65,17 @@ public function action_index($channelSlug = false)
 
 	// Last, but definitely not least... perform the search!
 	$search = ET::searchModel();
-	$conversationIDs = $search->getConversationIDs($channelIds, $searchString, count($currentChannels) or !ET::$session->userId);
+        
+        if ($tagText) {
+            // XXX: add 2016/02 タグ検索の場合
+            $conversationIDs = $search->getConversationIDsByTagText($tagText, $channelIds);
+            $tagsInfo[0] = array("tagsId"=>0,"tagText"=>$tagText);
+            $this->data("tags", $tagsInfo);
+            $this->data("isTagSearch", 1);
+        } else {
+            
+            $conversationIDs = $search->getConversationIDs($channelIds, $searchString, count($currentChannels) or !ET::$session->userId);
+        }
 
 	// If this page was originally accessed at conversations/markAsRead/all?search=whatever (the
 	// markAsRead method simply calls the index method), then mark the results as read.
@@ -245,6 +255,17 @@ public function action_index($channelSlug = false)
 		$this->json("results", $results);
 		$this->render();
 	}
+}
+
+public function action_tags($tagText=false) {
+    // 前後のスペース除去しておく
+    $tagText = SwcUtils::trimSpace($tagText);
+    if ($tagText) {
+        $this->action_index(false, $tagText);
+    } else {
+        // 通常の一覧へ
+        $this->redirect(URL(C("esoTalk.baseURL")));
+    }
 }
 
 /**

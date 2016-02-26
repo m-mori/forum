@@ -12,26 +12,15 @@ if (!defined("IN_ESOTALK")) exit;
 
 $post = $data["post"];
 $mainFlg = $post["mainPostFlg"];
-
-if (SWC_FB_BTN): 
-// FB ボタン出力の場合
+$isInit = $this->data["isInit"];
 ?>
-<div id="fb-root"></div>
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) return;
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v2.5";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-<?php endif; ?>
 
 <div class='post hasControls <?php echo implode(" ", (array)$post["class"]); ?>' id='<?php echo $post["id"]; ?>'<?php
 if (!empty($post["data"])):
 foreach ((array)$post["data"] as $dk => $dv)
 	echo " data-$dk='$dv'";
 endif; ?>>
-
+    
 <?php if (!empty($post["avatar"])): ?>
 <div class='avatar'<?php if (!empty($post["hideAvatar"])): ?> style='display:none'<?php endif; ?>><?php echo $post["avatar"]; ?></div>
 <?php endif; ?>
@@ -65,9 +54,11 @@ endif; ?>>
     
 </div>
 
-<?php // 返信以外の場合 SNSボタン出力
-if (!empty($post["title"]) && ($post["id"]!="reply")): ?>    
-<div class='postSnsArea' style="padding: 5px 15px 0 15px;">
+</div>
+
+<?php // 初期表示の場合 返信以外の場合 SNSボタン出力
+if ($isInit && !empty($post["title"]) && ($post["id"]!="reply")): ?>    
+<div class='postSnsArea' style="padding: 5px 15px 0 79px;">
 
     <?php if (SWC_TW_BTN && $mainFlg): // TW ボタン出力の場合 ?>
     <iframe allowtransparency="true" frameborder="0" scrolling="no" style="vertical-align: middle;float:left;width:90px;height:20px;" src="//platform.twitter.com/widgets/tweet_button.html?url=<?php echo $post['purl']; ?>&AMP;count=horizontal&AMP;lang=ja&AMP;hashtags=%E3%82%B9%E3%83%90%E3%82%B3%E3%83%9F"></iframe>
@@ -89,7 +80,5 @@ if (!empty($post["title"]) && ($post["id"]!="reply")): ?>
     <?php endif; ?>
 
 </div>
-<?php endif; ?>
-
-</div>
 <br clear="all">
+<?php endif; ?>

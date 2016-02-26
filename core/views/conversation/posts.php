@@ -23,10 +23,13 @@ if ($prevPost and empty($prevPost["deleteMemberId"]) and $prevPost["memberId"] =
 
 //$thisPostTime = relativeTime($post["time"]);
 $thisPostTime = SwcUtils::getStrfTime($post["time"]);     // 年月日日時として表示
-
+$mainFlg = $post["mainPostFlg"];
 ?>
 <li data-index='<?php echo date("Y", $post["time"]).date("m", $post["time"]); ?>'>
 <?php
+if ($mainFlg) {
+    $this->renderView("conversation/tagsPath", array("tags" => $this->data["tags"]));
+}   
 // If the post before this one has a different relative time string to this one, output a 'time marker'.
 if (!isset($prevPost["time"]) or relativeTime($prevPost["time"]) != $thisPostTime): ?>
 <div class='timeMarker'<?php if ($thisPostTime == T("just now")): ?> data-now='1'<?php endif; ?>><?php echo $thisPostTime; ?></div>

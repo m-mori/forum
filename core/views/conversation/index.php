@@ -30,7 +30,19 @@ function makeURL($startFrom = 0, $searchString = "")
 $classes = array("channel-".$conversation["channelId"]);
 if ($conversation["starred"]) $classes[] = "starred";
 if ($conversation["startMemberId"] == ET::$session->userId) $classes[] = "mine";
+if (SWC_FB_BTN): 
+// メイン投稿＆FB ボタン出力の場合
 ?>
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v2.5";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+<?php endif; ?>
+
 <div id='conversation' class='hasScrubber <?php echo implode(" ", $classes); ?>'>
 
 <div class='scrubberColumn'>
@@ -180,6 +192,15 @@ if ($data["controlsMenu"]->count()): ?>
 <ul id='conversationControls' class='controls'>
 <?php echo $data["controlsMenu"]->getContents(); ?>
 </ul>
+<?php endif; ?>
+
+<?php
+// Members allowed list (only if conversation is private or editable)
+if (count($conversation["membersAllowedSummary"]) or $conversation["startMemberId"] == ET::$session->userId or $conversation["canModerate"]): ?>
+<div id='conversationPrivacy' class='area'>
+<span class='allowedList action'><?php $this->renderView("conversation/membersAllowedSummary", $data); ?></span>
+<?php if ($conversation["startMemberId"] == ET::$session->userId): ?><a href='<?php echo URL("conversation/edit/".$conversation["conversationId"]); ?>' id='control-changeMembersAllowed'><i class='icon-pencil'></i> <?php echo T("Change"); ?></a><?php endif; ?>
+</div>
 <?php endif; ?>
 
 <div id='conversationBody'>

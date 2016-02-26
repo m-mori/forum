@@ -9,6 +9,7 @@ if (!defined("IN_ESOTALK")) exit;
  *
  * @package esoTalk
  */
+$isTagSearch = $data["isTagSearch"];
 ?>
 
 <div id='conversationsFilter' class='bodyHeader'>
@@ -21,10 +22,17 @@ if (!defined("IN_ESOTALK")) exit;
 </fieldset>
 </form>
 
+<?php
+// タグリスト
+//if ($isTagSearch): 
+//$this->renderView("conversation/tagsPath", $data);
+//else: 
+?>
 <ul id='channels' class='channels tabs'>
 <li class='channelListItem'><a href='<?php echo URL("channels"); ?>' class='channel-list' data-channel='list' title='<?php echo T("Channel List"); ?>'><i class="icon-list"></i></a></li>
 <?php $this->renderView("channels/tabs", $data); ?>
 </ul>
+<?php //endif; ?>
 
 <?php
 // Controls

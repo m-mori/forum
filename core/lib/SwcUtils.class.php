@@ -112,6 +112,19 @@ class SwcUtils {
     }
     
     /**
+     * 前後の半角、全角スペース除去
+     * @param type $str
+     * @return type
+     */
+    public static function trimSpace ($str) {
+        // 先頭の半角、全角スペースを、空文字に置き換える
+        $str = preg_replace('/^[ 　]+/u', '', $str);
+        // 最後の半角、全角スペースを、空文字に置き換える
+        $str = preg_replace('/[ 　]+$/u', '', $str);
+        return $str;
+    }
+    
+    /**
      * 文字列がマルチバイト（を含む）かどうか
      * @param type $s
      * @return type

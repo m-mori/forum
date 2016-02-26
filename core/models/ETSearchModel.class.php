@@ -275,6 +275,72 @@ public function isFlooding()
 	return false;
 }
 
+/**
+ * タグ文字列を検索キーとして、対応する会話IDリストを検索取得
+ * @param type $tagText
+ * @param type $channelIDs
+ * @param type $searchString
+ * @param type $orderBySticky
+ */
+public function getConversationIDsByTagText($tagText, $channelIDs = array(), $searchString = "", $orderBySticky = false) {
+    if (!$tagText) return false;
+    
+    // タグテキストからタグIDを取得する
+    $tagsId = ET::tagsModel()->getIdByTagText($tagText);
+    // 該当なしの場合 検索結果なし
+    if (!$tagsId) return false;
+    
+    $this->reset();
+    // Initialize the SQL query that will return the resulting conversation IDs.
+    $this->sql = ET::SQL()->select("t.conversationId")
+                ->from("conversation_tags t")
+                ->from("conversation c", "c.conversationId=t.conversationId", "left");
+
+    // ft_conversation_tags のタグID一致する会話IDを取得
+    $this->sql->where("(t.tag0=:tagsId OR t.tag1=:tagsId OR t.tag2=:tagsId OR t.tag3=:tagsId OR t.tag4=:tagsId OR t.tag5=:tagsId OR t.tag6=:tagsId OR t.tag7=:tagsId OR t.tag8=:tagsId OR t.tag9=:tagsId)");
+    $this->sql->bind(":tagsId", $tagsId);
+    
+    // Only get conversations in the specified channels.
+    if ($channelIDs) {
+        $this->sql->where("c.channelId IN (:channelIds)")->bind(":channelIds", $channelIDs);
+    }
+    
+    // If an order for the search results has not been specified, apply a default.
+    // Order by sticky and then last post time.
+    if (!count($this->orderBy)) {
+        if ($orderBySticky) {
+            $this->orderBy("c.sticky DESC");
+        }
+        $this->orderBy("c.lastPostTime DESC");
+    }
+
+    // If we're not including ignored conversations, add a where predicate to the query to exclude them.
+	if (!$this->includeIgnored and ET::$session->userId) {
+            $q = ET::SQL()->select("conversationId")->from("member_conversation")->where("type='member'")->where("id=:memberIdIgnored")->where("ignored=1")->get();
+            $this->sql->where("t.conversationId NOT IN ($q)")->bind(":memberIdIgnored", ET::$session->userId);
+        }
+    
+    // Set a default limit if none has previously been set.
+    if (!$this->limit) $this->limit = C("esoTalk.search.limit");
+    
+    $this->sql->orderBy($this->orderBy)->limit($this->limit + 1);
+    
+    // Make sure conversations that the user isn't allowed to see are filtered out.
+    ET::conversationModel()->addAllowedPredicate($this->sql);
+
+    // Execute the query, and collect the final set of conversation IDs.
+    $result = $this->sql->exec();
+    $conversationIDs = array();
+    while ($row = $result->nextRow()) $conversationIDs[] = reset($row);
+
+    // If there's one more result than we actually need, indicate that there are "more results."
+    if (count($conversationIDs) == $this->limit + 1) {
+            array_pop($conversationIDs);
+            if ($this->limit < C("esoTalk.search.limitMax")) $this->areMoreResults = true;
+    }
+
+    return count($conversationIDs) ? $conversationIDs : false;
+}
 
 /**
  * Deconstruct a search string and return a list of conversation IDs that fulfill it.
@@ -348,7 +414,7 @@ public function getConversationIDs($channelIDs = array(), $searchString = "", $o
 	if (!$this->includeIgnored and ET::$session->user) {
 		$q = ET::SQL()->select("conversationId")->from("member_conversation")->where("type='member'")->where("id=:memberIdIgnored")->where("ignored=1")->get();
 		$this->sql->where("conversationId NOT IN ($q)")->bind(":memberIdIgnored", ET::$session->userId);
-	}
+        }
 
 	// Now we need to loop through the ID filters and run them one-by-one. When a query returns a selection
 	// of conversation IDs, subsequent queries are restricted to filtering those conversation IDs,
@@ -494,15 +560,15 @@ public function getResults($conversationIDs, $checkForPermission = false)
 	$model = ET::conversationModel();
 
 	while ($row = $result->nextRow()) {
-            // 2016/02 SWCユーザ名設定    
+            // XXX： 2016/02 SWCユーザ名設定    
             $row["startMember"]=  SwcUtils::getUserName($row["startMemberId"]);
             $row["lastPostMember"]=  SwcUtils::getUserName($row["lastPostMemberId"]);
             
-		// Expand the comma-separated label flags into a workable array of active labels.
-		$row["labels"] = $model->expandLabels($row["labels"]);
+            // Expand the comma-separated label flags into a workable array of active labels.
+            $row["labels"] = $model->expandLabels($row["labels"]);
 
-		$row["replies"] = max(0, $row["countPosts"] - 1);
-		$results[] = $row;
+            $row["replies"] = max(0, $row["countPosts"] - 1);
+            $results[] = $row;
 
 	}
 
@@ -510,7 +576,7 @@ public function getResults($conversationIDs, $checkForPermission = false)
 
 	return $results;
 }
-
+        
 
 /**
  * Returns whether or not there are more results for the most recent search than were returned.

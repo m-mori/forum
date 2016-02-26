@@ -12,6 +12,9 @@ if (!defined("IN_ESOTALK")) exit;
 
 $form = $data["form"];
 $post = $data["post"];
+// 会話開始フラグ
+$isStartFlg = $this->data["isStartFlg"];
+$mainFlg = $post["mainPostFlg"];
 ?>
 <div class='standalone'>
 <?php echo $form->open(); ?>
@@ -21,7 +24,11 @@ $post = $data["post"];
 // Using the provided form object, construct a textarea and buttons.
 $body = $form->input("content", "textarea", array("cols" => "200", "rows" => "20"))."
 	<div id='p".$post["postId"]."-preview' class='preview'></div>";
-$footer = "<div class='editButtons'>".
+
+// タグ入力
+$footer = $this->getTagsArea($form);
+
+$footer .= "<div class='editButtons'>".
 	$form->saveButton()." ".
 	$form->cancelButton()."</div>";
 
