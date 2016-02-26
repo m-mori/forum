@@ -120,13 +120,11 @@ public function action_login()
 public function action_logout()
 {
 	if (!$this->validateToken()) return;
-	// SWCログアウトへ
-	$this->redirect(SwcUtils::getSwcUrl("logout"));
         
-//	ET::$session->remove("messages");
-//	ET::$session->logout();
-//
-//	$this->redirect(URL(R("return")));
+	ET::$session->remove("messages");
+	ET::$session->logout();
+
+	$this->redirect(URL(R("return")));
 }
 
 
