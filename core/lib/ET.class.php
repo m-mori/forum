@@ -446,6 +446,11 @@ public static function postModel()
 	return self::getInstance("postModel");
 }
 
+public static function tagsModel()
+{
+	return self::getInstance("tagsModel");
+}
+
 public static function searchModel()
 {
 	return self::getInstance("searchModel");

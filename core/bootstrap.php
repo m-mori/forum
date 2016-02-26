@@ -131,6 +131,8 @@ ETFactory::register("channelModel", "ETChannelModel", PATH_MODELS."/ETChannelMod
 ETFactory::register("groupModel", "ETGroupModel", PATH_MODELS."/ETGroupModel.class.php");
 ETFactory::register("activityModel", "ETActivityModel", PATH_MODELS."/ETActivityModel.class.php");
 ETFactory::register("upgradeModel", "ETUpgradeModel", PATH_MODELS."/ETUpgradeModel.class.php");
+// 2016/02 add Tags Model 
+ETFactory::register("tagsModel", "ETTagsModel", PATH_MODELS."/ETTagsModel.class.php");
 
 // If esoTalk hasn't been installed, register the install controller and set it as the default route.
 if (!C("esoTalk.installed")) {
