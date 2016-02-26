@@ -18,6 +18,10 @@ $definitions["date.full"] = "%Y/%m/%d %H:%M:%S";
 $definitions["date.short"] = "m/d";
 $definitions["month.full"] = "n月";
 $definitions["deleted"] = "削除済み";   // 削除済みユーザ名
+$definitions["Ignore conversation"] = "Ignore 設定する";
+$definitions["Unignore conversation"] = "Ignore 解除する";
+
+$definitions["label.max.image.files"] = "(画像ファイルは最大4件まで)";
 ///////////////////////////////////////////////////////////
 
 $definitions["%d day ago"] = "昨日";
@@ -166,9 +170,9 @@ $definitions["Feed"] = "フィード";
 $definitions["Filter by name or group..."] = "ユーザ名かグループ名で検索...";
 $definitions["Find this post"] = "このトピックを見つける";
 $definitions["First posted"] = "最初のトピック";
-$definitions["Follow"] = "ブックマーク";
-$definitions["Follow to receive notifications"] = "ブックマークして通知を受け取る";
-$definitions["Following"] = "ブックマーク";
+$definitions["Follow"] = "フォローする";
+$definitions["Follow to receive notifications"] = "このテーマをフォローして通知を受け取る";
+$definitions["Following"] = "フォロー中";
 $definitions["For %s seconds"] = "%s 秒間";
 $definitions["Forever"] = "ずっと";
 $definitions["Forgot?"] = "(忘れた)";
@@ -343,7 +347,7 @@ $definitions["Sign Up"] = "登録";
 $definitions["Skins"] = "スキン";
 $definitions["Sort By"] = "整理:";
 $definitions["Specify Setup Information"] = "セットアップ情報の指定";
-$definitions["Star to receive notifications"] = "ブックマークして通知を受信";
+$definitions["Star to receive notifications"] = "フォローして通知を受信";
 $definitions["Starred"] = "お気に入り";
 $definitions["Start"] = "始める";
 $definitions["Start a conversation"] = "トピック";
@@ -467,7 +471,7 @@ $definitions["message.locked"] = "このトピックは<strong>ロック</strong
 $definitions["message.loginToParticipate"] = "トピックを始め、返信や投稿をするためには、ログインしてください。";
 $definitions["message.logInToReply"] = "<a href='%1\$s' class='link-login'>ログイン</a> または <a href='%2\$s' class='link-join'>登録</a>して返信...";
 $definitions["message.logInToSeeAllConversations"] = "<a href='".URL("user/login")."' class='link-login'>ログイン</a> to expose some channels/conversations that may be hidden to guests.";
-$definitions["message.memberNotFound"] = "うーん、この名前のメンバーはいないようです...";
+$definitions["message.memberNotFound"] = "この名前のメンバーはいないようです...";
 $definitions["message.memberNoPermissionView"] = "トピックを閲覧する権限を持っていないため、そのメンバーの追加はできません。";
 $definitions["message.nameTaken"] = "入力した名前は、既に登録されているか予約済みの名前です。";
 $definitions["message.newSearchResults"] = "検索結果に新たなアクティビティがありました。 <a href='%s'>更新</a>";

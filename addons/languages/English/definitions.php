@@ -21,6 +21,10 @@ $definitions["date.full"] = "%c";
 $definitions["date.short"] = "M d";
 $definitions["month.full"] = "F";
 $definitions["deleted"] = "deleted";   // 削除済みユーザ名
+$definitions["Ignore conversation"] = "Ignore conversation";
+$definitions["Unignore conversation"] = "Unignore conversation";
+
+$definitions["label.max.image.files"] = "(The image file up to 4)";
 ///////////////////////////////////////////////////////////
 
 $definitions["%d day ago"] = "yesterday";
