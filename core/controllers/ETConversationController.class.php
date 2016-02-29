@@ -189,7 +189,6 @@ public function action_index($conversationId = false, $year = false, $month = fa
 		// Construct a canonical URL to this page.
 		$url = conversationURL($conversation["conversationId"], $conversation["title"])."/$startFrom".($searchString ? "?search=".urlencode($searchString) : "");
 		$this->canonicalURL = URL($url, true);
-                // XXX: slug 確認
 		// If the slug in the URL is not the same as the actual slug, redirect.
 		$slug = slug($conversation["title"]);
 		if ($slug and (strpos($conversationId, "-") === false or substr($conversationId, strpos($conversationId, "-") + 1) != $slug)) {
@@ -233,6 +232,7 @@ public function action_index($conversationId = false, $year = false, $month = fa
 //		$this->addJSFile("core/js/conversation.js");
                 // TODO: 4 debug
 		$this->addJSFile("/forum/core/js/conversation.js", "last");
+                $this->addJSFile("/forum/core/js/search.conversation.js","last");
 
 		// Add the RSS feed button.
 		// $this->addToMenu("meta", "feed", "<a href='".URL("conversation/index.atom/".$url)."' id='feed'>".T("Feed")."</a>");
@@ -404,6 +404,7 @@ public function action_start($member = false)
 		$this->addJSFile("core/js/autocomplete.js");
 //		$this->addJSFile("core/js/conversation.js");    TODO: 4 debug
 		$this->addJSFile("/forum/core/js/conversation.js", "last");
+		$this->addJSFile("/forum/core/js/search.conversation.js","last");
 		$this->addJSVar("mentions", C("esoTalk.format.mentions"));
 		$this->addJSLanguage("message.confirmLeave", "message.confirmDiscardPost");
 

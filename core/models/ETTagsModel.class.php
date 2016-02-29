@@ -53,6 +53,31 @@ public function getTagsInfo($conversationId) {
 }
 
 /**
+ * 複数タグ文字列で検索
+ * @param type $keys
+ * @return type
+ */
+public function getTagsIds($keys) {
+    if (is_array($keys) && count($keys)) {
+        // タグID,タグテキストの配列を取得
+        $result = ET::SQL()
+            ->select("distinct tagsId") 
+            ->from("tags")
+            ->where("tagText IN (:keys)")
+            ->bind(":keys", $keys)
+            ->exec()
+            ->allRows();
+        $ids = array();
+        if (count($result)) {
+            foreach ($result as $r) {
+                $ids[] = $r["tagsId"];
+            }
+        }
+        return $ids;
+    }
+}
+
+/**
  * タグ情報更新
  *  タグマスタ、会話-タグ情報を更新する
  *  ※投稿の更新時に呼び出しされる

@@ -17,7 +17,7 @@ $isTagSearch = $data["isTagSearch"];
 <form class='search big' id='search' action='<?php echo URL("conversations/".$data["channelSlug"]); ?>' method='get'>
 <fieldset>
 <i class='icon-search'></i>
-<input name='search' type='text' class='text' value='<?php echo sanitizeHTML($data["searchString"]); ?>' spellcheck='false' placeholder='<?php echo T("Search conversations..."); ?>'/>
+<input name='search' type='text' class='text' value='<?php echo sanitizeHTML($data["searchString"]); ?>' spellcheck='false' placeholder='<?php echo T("Search conversations..."); ?>' maxlength="200"/>
 <a class='control-reset' href='<?php echo URL("conversations/".$data["channelSlug"]); ?>'><i class='icon-remove'></i></a>
 </fieldset>
 </form>

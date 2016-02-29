@@ -64,12 +64,13 @@ init: function() {
 
 	// Add a handler to show the gambits section when the search input is active.
 	.focus(function() {
-		var input = $("#search input.text");
-		$("#gambits").addClass("popup").css({
-			position: "absolute",
-			top: input.offset().top + input.outerHeight() + 5,
-			left: input.offset().left
-		}).fadeIn("fast");
+            // フォーカス時 ポップアップ表示しない
+//		var input = $("#search input.text");
+//		$("#gambits").addClass("popup").css({
+//			position: "absolute",
+//			top: input.offset().top + input.outerHeight() + 5,
+//			left: input.offset().left
+//		}).fadeIn("fast");
 	});
 
 	// If the search input is blank, hide the reset 'x' button.
@@ -83,35 +84,35 @@ init: function() {
 	});
 
 
-	// INITIALIZE THE GAMBITS.
-
-	// Hide the gambits area.
-	$("#gambits").hide();
-
-	// The gambits area should hide when the search input loses focus.
-	ETSearch.formInput.blur(function() {
-		$("#gambits").fadeOut("fast");
-	});
-	// However, prevent the search input from losing focus if a click takes place on the gambits popup.
-	$("#gambits").mousedown(function(e) {
-		e.preventDefault();
-	});
-
-	// Add click and double click handlers to all the gambits.
-	$("#gambits a").click(function(e) {
-		e.preventDefault();
-		ETSearch.gambit(desanitize($(this).data("gambit")), e.shiftKey);
-		ETSearch.formInput.keyup();
-	}).dblclick(function(e) {
-		e.preventDefault();
-		ETSearch.search((e.shiftKey ? "!" : "") + "#" + desanitize($(this).data("gambit")));
-		ETSearch.formInput.blur().keyup();
-	})
-
-	// Prevent the search field from being unfocussed when a gambit is clicked.
-	.bind("mousedown", function(e) {
-		e.preventDefault();
-	});
+//	// INITIALIZE THE GAMBITS.
+//
+//	// Hide the gambits area.
+//	$("#gambits").hide();
+//
+//	// The gambits area should hide when the search input loses focus.
+//	ETSearch.formInput.blur(function() {
+//		$("#gambits").fadeOut("fast");
+//	});
+//	// However, prevent the search input from losing focus if a click takes place on the gambits popup.
+//	$("#gambits").mousedown(function(e) {
+//		e.preventDefault();
+//	});
+//
+//	// Add click and double click handlers to all the gambits.
+//	$("#gambits a").click(function(e) {
+//		e.preventDefault();
+//		ETSearch.gambit(desanitize($(this).data("gambit")), e.shiftKey);
+//		ETSearch.formInput.keyup();
+//	}).dblclick(function(e) {
+//		e.preventDefault();
+//		ETSearch.search((e.shiftKey ? "!" : "") + "#" + desanitize($(this).data("gambit")));
+//		ETSearch.formInput.blur().keyup();
+//	})
+//
+//	// Prevent the search field from being unfocussed when a gambit is clicked.
+//	.bind("mousedown", function(e) {
+//		e.preventDefault();
+//	});
 
 
 	// INITIALIZE THE REST OF THE PAGE.
@@ -208,7 +209,7 @@ getConversationIdForElement: function(elm) {
 
 // Initialize the search results.
 initSearchResults: function() {
-
+        // TODO: 確認要
 	// Make all "private" labels show a list of members allowed when they are moused over.
 	ETMembersAllowedTooltip.init($("#conversations .label.label-private"), function(elm) {return ETSearch.getConversationIdForElement(elm)});
 	ETMembersAllowedTooltip.showDelay = 500;
@@ -298,7 +299,7 @@ getCurrentChannelSlugs: function() {
 search: function(query, customMethod) {
 
 	// Hide the gambits popup.
-	$("#gambits").fadeOut("fast");
+//	$("#gambits").fadeOut("fast");
 
 	// Set the current search and the form input value.
 	ETSearch.currentSearch = ETSearch.formInput.val(query).val();

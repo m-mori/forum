@@ -372,7 +372,15 @@ public function getConversationIDs($channelIDs = array(), $searchString = "", $o
 	// Process the search string into individial terms. Replace all "-" signs with "+!", and then
 	// split the string by "+". Negated terms will then be prefixed with "!". Only keep the first
 	// 5 terms, just to keep the load on the database down!
-	$terms = !empty($searchString) ? explode("+", strtolower(str_replace("-", "+!", trim($searchString, " +-")))) : array();
+//        $terms = !empty($searchString) ? explode("+", strtolower(str_replace("-", "+!", trim($searchString, " +-")))) : array();
+        $tearms = array();
+	if (!empty($searchString)) {
+            // キーワードがある場合 
+            // 全角スペースを半角スペースへ置換
+            $searchString = mb_convert_kana($searchString, 's', 'UTF-8');;
+            $terms = explode(" ", strtolower(str_replace("-", " !", trim($searchString, " +-"))));
+        }
+        // 最初の5個までを対象とする
 	$terms = array_slice(array_filter($terms), 0, 5);
 
 	// Take each term, match it with a gambit, and execute the gambit's function.
@@ -413,7 +421,7 @@ public function getConversationIDs($channelIDs = array(), $searchString = "", $o
 	// If we're not including ignored conversations, add a where predicate to the query to exclude them.
 	if (!$this->includeIgnored and ET::$session->user) {
 		$q = ET::SQL()->select("conversationId")->from("member_conversation")->where("type='member'")->where("id=:memberIdIgnored")->where("ignored=1")->get();
-		$this->sql->where("conversationId NOT IN ($q)")->bind(":memberIdIgnored", ET::$session->userId);
+		$this->sql->where("c.conversationId NOT IN ($q)")->bind(":memberIdIgnored", ET::$session->userId);
         }
 
 	// Now we need to loop through the ID filters and run them one-by-one. When a query returns a selection
@@ -459,29 +467,57 @@ public function getConversationIDs($channelIDs = array(), $searchString = "", $o
 	}
 
 	// Now check if there are any fulltext keywords to filter by.
-	if (count($this->fulltext)) {
-
-		// Run a query against the posts table to get matching conversation IDs.
-		$fulltextString = implode(" ", $this->fulltext);
-		$fulltextQuery = ET::SQL()
-			->select("DISTINCT conversationId")
-			->from("post")
-			->where("MATCH (title, content) AGAINST (:fulltext IN BOOLEAN MODE)")
-			->where($idCondition)
-			->orderBy("MATCH (title, content) AGAINST (:fulltextOrder) DESC")
-			->bind(":fulltext", $fulltextString)
-			->bind(":fulltextOrder", $fulltextString);
-
-		$this->trigger("fulltext", array($fulltextQuery, $this->fulltext));
-
-		$result = $fulltextQuery->exec();
-		$ids = array();
-		while ($row = $result->nextRow()) $ids[] = reset($row);
-
-		// Change the ID condition to this list of matching IDs, and order by relevance.
-		if (count($ids)) $idCondition = "conversationId IN (".implode(",", $ids).")";
-		else return false;
-		$this->orderBy = array("FIELD(c.conversationId,".implode(",", $ids).")");
+        $cnt = count($this->fulltext);
+	if ($cnt > 0) {
+            // タグID取得
+            $tagsIds = ET::tagsModel()->getTagsIds($this->fulltext);
+            
+            // 投稿のタイトル・本文・コメントをLIKE（部分一致）検索する
+            // タグを完全一致検索する
+            // 下書きは検索しない
+            $this->sql->from("post p", "p.conversationId=c.conversationId", "left");
+            $this->sql->where("c.countPosts > 0");
+            $strWhere = "";
+            for ($i=0;$i<$cnt;$i++) {
+                $val = $this->fulltext[$i];
+                $param = ":text" .$i;
+                if ($i != 0) {
+                    $strWhere .= " OR ";
+                }
+                $strWhere .= "c.title LIKE ".$param ." OR p.content LIKE " .$param;
+                $this->sql->bind($param, '%'.$val.'%');
+            }
+            
+            if (is_array($tagsIds) && count($tagsIds)) {
+                // タグIDがある場合
+                $this->sql->from("conversation_tags t", "t.conversationId=c.conversationId", "left");
+//                $this->sql->where("(t.tag0 IN (:tagsIds) OR t.tag1 IN (:tagsIds) OR t.tag2 IN (:tagsIds) OR t.tag3 IN (:tagsIds) OR t.tag4 IN (:tagsIds) OR t.tag5 IN (:tagsIds) OR t.tag6 IN (:tagsIds) OR t.tag7 IN (:tagsIds) OR t.tag8 IN (:tagsIds) OR t.tag9 IN (:tagsIds))");
+                $strWhere .= " OR (t.tag0 IN (:tagsIds) OR t.tag1 IN (:tagsIds) OR t.tag2 IN (:tagsIds) OR t.tag3 IN (:tagsIds) OR t.tag4 IN (:tagsIds) OR t.tag5 IN (:tagsIds) OR t.tag6 IN (:tagsIds) OR t.tag7 IN (:tagsIds) OR t.tag8 IN (:tagsIds) OR t.tag9 IN (:tagsIds))";
+                $this->sql->bind(":tagsIds", $tagsIds);
+            }
+            $this->sql->where($strWhere);
+            
+//		// Run a query against the posts table to get matching conversation IDs.
+//		$fulltextString = implode(" ", $this->fulltext);
+//		$fulltextQuery = ET::SQL()
+//			->select("DISTINCT conversationId")
+//			->from("post")
+//			->where("MATCH (title, content) AGAINST (:fulltext IN BOOLEAN MODE)")
+//			->where($idCondition)
+//			->orderBy("MATCH (title, content) AGAINST (:fulltextOrder) DESC")
+//			->bind(":fulltext", $fulltextString)
+//			->bind(":fulltextOrder", $fulltextString);
+//
+//		$this->trigger("fulltext", array($fulltextQuery, $this->fulltext));
+//
+//		$result = $fulltextQuery->exec();
+//		$ids = array();
+//		while ($row = $result->nextRow()) $ids[] = reset($row);
+//
+//		// Change the ID condition to this list of matching IDs, and order by relevance.
+//		if (count($ids)) $idCondition = "conversationId IN (".implode(",", $ids).")";
+//		else return false;
+//		$this->orderBy = array("FIELD(c.conversationId,".implode(",", $ids).")");
 	}
 
 	// Set a default limit if none has previously been set.

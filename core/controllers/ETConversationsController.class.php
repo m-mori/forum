@@ -209,7 +209,9 @@ public function action_index($channelSlug = false, $tagText = false)
 		$this->addJSVar("currentChannels", $currentChannels);
 		$this->addJSFile("core/js/lib/jquery.cookie.js");
 		$this->addJSFile("core/js/autocomplete.js");
-		$this->addJSFile("core/js/search.js");
+//		$this->addJSFile("core/js/search.js");
+                // TODO: 4 debug
+		$this->addJSFile("/forum/core/js/search.js","last");
 
 		// Add an array of channels in the form slug => id for the JavaScript to use.
 		$channels = array();

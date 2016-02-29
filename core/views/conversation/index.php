@@ -51,12 +51,13 @@ if (SWC_FB_BTN):
 <?php $this->trigger("renderControlsBefore", array($data)); ?>
 
 <?php
+$channelSlug = $data["conversation"]["channelSlug"];
 // Search within conversation form ?>
-<form class='search' id='searchWithinConversation' action='<?php echo URL(conversationURL($conversation["conversationId"], $conversation["title"])); ?>' method='get'>
+<form class='search' id='search' action='<?php echo URL("conversations/".$channelSlug); ?>' method='get'>
 <fieldset>
 <i class='icon-search'></i>
-<input name='search' type='text' class='text' value='<?php echo sanitizeHTML($data["searchString"]); ?>' placeholder='<?php echo T("Search"); ?>'/>
-<?php if ($data["searchString"]): ?><a href='<?php echo URL(conversationURL($conversation["conversationId"], $conversation["title"])); ?>' class='control-reset'><i class='icon-remove'></i></a><?php endif; ?>
+<input name='search' type='text' class='text' value='<?php echo sanitizeHTML($data["searchString"]); ?>' placeholder='<?php echo T("Search"); ?>' maxlength="200"/>
+<a class='control-reset' href='<?php echo URL("conversations/".$channelSlug); ?>'><i class='icon-remove'></i></a>
 </fieldset>
 </form>
 
