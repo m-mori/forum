@@ -271,13 +271,18 @@ class AttachmentModel extends ETModel {
         /**
          * サムネイル画像登録
          * @param type $attachment
-         * @param type $type
+         * @param type $type 1:メイン画像
          */
-        public function createThumb($attachment, $postId, $type) {
+        public function createThumb($attachment, $postId, $type, $isRemove=false) {
             $uploader = ET::uploader();
             // 一時ファイルパス取得
             $srcPath = $this->getTempFileName($attachment);
             $thumbPath = $this->getThumbFileName($srcPath);
+            
+            if (!file_exists($srcPath) && $attachment["content"]) {
+                // 元画像なしの場合
+                file_put_contents($srcPath, $attachment["content"]);
+            }
             
             // サムネイル画像生成
             $thumb = $uploader->saveAsImage($srcPath, $thumbPath, SWC_IMG_THUMB_W, SWC_IMG_THUMB_H, "crop");
@@ -299,6 +304,11 @@ class AttachmentModel extends ETModel {
                     ->set("attachmentId", $attachment["attachmentId"])
                     ->set("content", $imgFile)
                     ->exec();
+            
+            if ($isRemove) {
+                // 削除フラグON
+                $this->removeFile($attachment);
+            }
         }
         
         public function getTempFileName($attachment) {
@@ -344,7 +354,7 @@ class AttachmentModel extends ETModel {
          */
         public function getCountByPostId($postId, $conversationId) {
             if ($conversationId && $postId) {
-            // conversationId, sessId から一時画像ファイル検索
+                // conversationId, postId から一時画像ファイル検索
                 $where = array(
                     "conversationId" => $conversationId,
                     "postId" => $postId, 

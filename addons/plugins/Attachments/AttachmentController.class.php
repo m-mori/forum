@@ -8,7 +8,9 @@ class AttachmentController extends ETController {
 
     static $file_key = "qqfile";
     
-	protected function getAttachment($attachmentId)
+    static $noimage_content = "";
+
+    protected function getAttachment($attachmentId)
 	{
 		// Find the attachment in the database.
 		$model = ET::getInstance("attachmentModel");
@@ -63,6 +65,11 @@ class AttachmentController extends ETController {
 	}
 
 	// Generate/view a thumbnail of an image attachment.
+        /**
+         * サムネイル表示 ※未使用
+         * @param type $attachmentId
+         * @return boolean
+         */
 	public function action_thumb($attachmentId = false)
 	{
             if (!($attachment = $this->getAttachment($attachmentId))) return;
@@ -75,7 +82,7 @@ class AttachmentController extends ETController {
                 // サムネイル画像有り
                 $img = $thumb["content"];
             }
-            // TODO: メインだがサムネイル画像なしの場合
+            // XXX: メインだがサムネイル画像なしの場合
             if ($img) {
                 $size = strlen($img);
                 header('Content-Type: '.$model->mime($attachment["filename"]));
@@ -91,12 +98,15 @@ class AttachmentController extends ETController {
         /**
          * XXX: 追加
          * 一覧表示用のテーマメインサムネイル画像を取得
-         * @param type $postId
+         *  引数のattachmentId のサムネ画像がない場合、サムネ画像を生成し出力する
+         *  何の画像データもなしの場合、ノーイメージ画像を出力する
+         * @param type $attachmentId
          * @return boolean
          */
 	public function action_menu($id = false)
 	{
             if ($id) {
+                // attachmentId で画像情報取得
                 $model = $this->getAttachmentModel();
                 $attachment = $model->getById($id);
                 $thumb = $model->getThumb($id);
@@ -107,18 +117,32 @@ class AttachmentController extends ETController {
                 $noimagePath = SwcUtils::getNoImageFilePath();
                 $filename = pathinfo($noimagePath, PATHINFO_BASENAME);
                 
-                // TODO: メイン画像はあるが、サムネ画像がない場合の処理
                 if (is_array($thumb) 
-                    && $thumb["content"]
-                    && is_array($attachment)) {
+                    && $thumb["content"]) {
                     // サムネイル画像有り
                     $img = $thumb["content"];
                     $filename=$attachment["filename"];
                 } else {
-                    // 画像がない投稿の場合 ノーイメージ読込
-                    $img = file_get_contents($noimagePath);
+                    // サムネ画像なしの場合
+                    if (is_array($attachment) && count($attachment)) {
+                        // 画像データありの場合
+                        // 指定IDのサムネ画像生成し出力する
+                        $model->createThumb($attachment, $attachment["postId"],1,1);
+                        // サムネ画像取得
+                        $thumb = $model->getThumb($id);
+                        if (is_array($thumb) && $thumb["content"]) {
+                            $img = $thumb["content"];
+                        }
+                    }
                 }
+                if (!$img) {
+                    // 最終的に画像データなしの場合 
+                    // ノーイメージ出力
+                    $img = $this->getNoimageContent();
+                }
+                
                 if ($img) {
+                    // サムネ画像として出力
                     $size = strlen($img);
                     header('Content-Type: '.$model->mime($filename));
                     if ($size) header('Content-Length: ' . $size);
@@ -133,6 +157,18 @@ class AttachmentController extends ETController {
 	}
 
         /**
+         * ノーイメージ画像データ取得
+         * @return type
+         */
+        private function getNoimageContent() {
+            if (!self::$noimage_content) {
+                $noimagePath = SwcUtils::getNoImageFilePath();
+                self::$noimage_content = file_get_contents($noimagePath);
+            }
+            return self::$noimage_content;
+        }
+        
+        /**
          * 添付画像ファイルアップロード処理
          *  ※DBへ保存するように処理修正
          */
@@ -146,14 +182,10 @@ class AttachmentController extends ETController {
                 // 管理画面で設定されたファイル拡張子（画像のみ）
 		// Set the allowed file types based on config.
 		$allowedFileTypes = C("plugin.Attachments.allowedFileTypes");
-//		if (!empty($allowedFileTypes))
-//			$uploader->allowedExtensions = $allowedFileTypes;
 
                 // 管理画面で設定されたMAXサイズ（デフォルト: 25MB）
 		// Set the max file size based on config.
                 $maxSize = C("plugin.Attachments.maxFileSize");
-//		if ($size = C("plugin.Attachments.maxFileSize"))
-//			$uploader->sizeLimit = $size;
 
                 $model = $this->getAttachmentModel();
                 $id = "";
