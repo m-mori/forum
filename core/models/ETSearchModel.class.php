@@ -379,37 +379,37 @@ public function getConversationIDs($channelIDs = array(), $searchString = "", $o
             // 全角スペースを半角スペースへ置換
             $searchString = mb_convert_kana($searchString, 's', 'UTF-8');;
             $terms = explode(" ", strtolower(str_replace("-", " !", trim($searchString, " +-"))));
+            // 最初の5個までを対象とする
+            $terms = array_slice(array_filter($terms), 0, 5);
+
+            // Take each term, match it with a gambit, and execute the gambit's function.
+            foreach ($terms as $term) {
+
+                    // Are we dealing with a negated search term, ie. prefixed with a "!"?
+                    $term = trim($term);
+                    if ($negate = ($term[0] == "!")) $term = trim($term, "! ");
+
+                    if ($term[0] == "#") {
+                            $term = ltrim($term, "#");
+
+                            // If the term is an alias, translate it into the appropriate gambit.
+                            if (array_key_exists($term, self::$aliases)) $term = self::$aliases[$term];
+
+                            // Find a matching gambit by evaluating each gambit's condition, and run its callback function.
+                            foreach (self::$gambits as $gambit) {
+                                    list($condition, $function) = $gambit;
+                                    if (eval($condition)) {
+                                            call_user_func_array($function, array(&$this, $term, $negate));
+                                            continue 2;
+                                    }
+                            }
+                    }
+
+                    // If we didn't find a gambit, use this term as a fulltext term.
+                    if ($negate) $term = "-".str_replace(" ", " -", $term);
+                    $this->fulltext($term);
+            }
         }
-        // 最初の5個までを対象とする
-	$terms = array_slice(array_filter($terms), 0, 5);
-
-	// Take each term, match it with a gambit, and execute the gambit's function.
-	foreach ($terms as $term) {
-
-		// Are we dealing with a negated search term, ie. prefixed with a "!"?
-		$term = trim($term);
-		if ($negate = ($term[0] == "!")) $term = trim($term, "! ");
-
-		if ($term[0] == "#") {
-			$term = ltrim($term, "#");
-
-			// If the term is an alias, translate it into the appropriate gambit.
-			if (array_key_exists($term, self::$aliases)) $term = self::$aliases[$term];
-
-			// Find a matching gambit by evaluating each gambit's condition, and run its callback function.
-			foreach (self::$gambits as $gambit) {
-				list($condition, $function) = $gambit;
-				if (eval($condition)) {
-					call_user_func_array($function, array(&$this, $term, $negate));
-					continue 2;
-				}
-			}
-		}
-
-		// If we didn't find a gambit, use this term as a fulltext term.
-		if ($negate) $term = "-".str_replace(" ", " -", $term);
-		$this->fulltext($term);
-	}
 
 	// If an order for the search results has not been specified, apply a default.
 	// Order by sticky and then last post time.
