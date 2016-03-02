@@ -343,6 +343,11 @@ public function getConversationIDsByTagText($tagText, $channelIDs = array(), $se
 }
 
 /**
+ * 通常の一覧テーマ検索取得処理
+ * 
+ *  キーワード指定がある場合、投稿のタイトル・本文・コメント・タグに対して検索処理実施する
+ *  下書きは検索対象外
+ * 
  * Deconstruct a search string and return a list of conversation IDs that fulfill it.
  *
  * @param array $channelIDs A list of channel IDs to include results from.
@@ -350,7 +355,7 @@ public function getConversationIDsByTagText($tagText, $channelIDs = array(), $se
  * @param bool $orderBySticky Whether or not to put stickied conversations at the top.
  * @return array|bool An array of matching conversation IDs, or false if there are none.
  */
-public function getConversationIDs($channelIDs = array(), $searchString = "", $orderBySticky = false)
+public function getConversationIDs($channelIDs = array(), $searchString = "", $orderBySticky = false, $searchLimit= false)
 {
 	$this->reset();
 
@@ -491,35 +496,15 @@ public function getConversationIDs($channelIDs = array(), $searchString = "", $o
             if (is_array($tagsIds) && count($tagsIds)) {
                 // タグIDがある場合
                 $this->sql->from("conversation_tags t", "t.conversationId=c.conversationId", "left");
-//                $this->sql->where("(t.tag0 IN (:tagsIds) OR t.tag1 IN (:tagsIds) OR t.tag2 IN (:tagsIds) OR t.tag3 IN (:tagsIds) OR t.tag4 IN (:tagsIds) OR t.tag5 IN (:tagsIds) OR t.tag6 IN (:tagsIds) OR t.tag7 IN (:tagsIds) OR t.tag8 IN (:tagsIds) OR t.tag9 IN (:tagsIds))");
                 $strWhere .= " OR (t.tag0 IN (:tagsIds) OR t.tag1 IN (:tagsIds) OR t.tag2 IN (:tagsIds) OR t.tag3 IN (:tagsIds) OR t.tag4 IN (:tagsIds) OR t.tag5 IN (:tagsIds) OR t.tag6 IN (:tagsIds) OR t.tag7 IN (:tagsIds) OR t.tag8 IN (:tagsIds) OR t.tag9 IN (:tagsIds))";
                 $this->sql->bind(":tagsIds", $tagsIds);
             }
             $this->sql->where($strWhere);
             
-//		// Run a query against the posts table to get matching conversation IDs.
-//		$fulltextString = implode(" ", $this->fulltext);
-//		$fulltextQuery = ET::SQL()
-//			->select("DISTINCT conversationId")
-//			->from("post")
-//			->where("MATCH (title, content) AGAINST (:fulltext IN BOOLEAN MODE)")
-//			->where($idCondition)
-//			->orderBy("MATCH (title, content) AGAINST (:fulltextOrder) DESC")
-//			->bind(":fulltext", $fulltextString)
-//			->bind(":fulltextOrder", $fulltextString);
-//
-//		$this->trigger("fulltext", array($fulltextQuery, $this->fulltext));
-//
-//		$result = $fulltextQuery->exec();
-//		$ids = array();
-//		while ($row = $result->nextRow()) $ids[] = reset($row);
-//
-//		// Change the ID condition to this list of matching IDs, and order by relevance.
-//		if (count($ids)) $idCondition = "conversationId IN (".implode(",", $ids).")";
-//		else return false;
-//		$this->orderBy = array("FIELD(c.conversationId,".implode(",", $ids).")");
 	}
-
+        
+        // 取得件数設定
+        $this->limit = $searchLimit;
 	// Set a default limit if none has previously been set.
 	if (!$this->limit) $this->limit = C("esoTalk.search.limit");
 

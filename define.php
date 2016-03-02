@@ -29,3 +29,6 @@ define("SWC_MAIN_THUMB_DISPLAY", 1);
 // デフォルト画像 サムネイルパス
 define("SWC_NOIMG_THUMB_PATH", "img/noimage.jpg");
 
+// 新着記事一覧件数 デフォルト: 30
+define("SWC_LIST_CNT_DEFAULT", 30);
+

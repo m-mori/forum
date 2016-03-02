@@ -19,7 +19,7 @@ class ETConversationsController extends ETController {
  *
  * @return void
  */
-public function action_index($channelSlug = false, $tagText = false)
+public function action_index($channelSlug = false, $tagText = false, $isNewFlg = false)
 {
 	if (!$this->allowed()) return;
 	
@@ -73,8 +73,13 @@ public function action_index($channelSlug = false, $tagText = false)
             $this->data("tags", $tagsInfo);
             $this->data("isTagSearch", 1);
         } else {
-            
-            $conversationIDs = $search->getConversationIDs($channelIds, $searchString, count($currentChannels) or !ET::$session->userId);
+            // 通常処理
+            $searchLimit = false;
+            if ($this->responseType === RESPONSE_TYPE_JSON) {
+                // json 出力の場合 取得件数設定
+                $searchLimit = SWC_LIST_CNT_DEFAULT;
+            }
+            $conversationIDs = $search->getConversationIDs($channelIds, $searchString, count($currentChannels) or !ET::$session->userId, $searchLimit);
         }
 
 	// If this page was originally accessed at conversations/markAsRead/all?search=whatever (the
@@ -257,6 +262,17 @@ public function action_index($channelSlug = false, $tagText = false)
 		$this->json("results", $results);
 		$this->render();
 	}
+}
+
+/**
+ * SWC新着記事一覧取得用
+ * 
+ */
+public function action_news() {
+    // json 形式で出力
+    $this->responseType = RESPONSE_TYPE_JSON;
+    // 一覧処理
+    $this->action_index(false, false, true);
 }
 
 public function action_tags($tagText=false) {
