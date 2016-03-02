@@ -85,9 +85,8 @@ public function getTagsIds($keys) {
  * @param type $tags
  * @return boolean
  */
-public function editPost($post, $tags)
+public function editPost($conversationId, $mainPostFlg, $tags)
 {
-    $mainPostFlg = $post["mainPostFlg"];
     if ($mainPostFlg 
         && is_array($tags) && count($tags)>0) {
         // テーマの開始記事で、タグ入力値がある場合
@@ -97,8 +96,6 @@ public function editPost($post, $tags)
 //            $this->validate($name, $value, array($this, "validateTag"));
 //        }
 	if ($this->errorCount()) return false;
-        
-        $conversationId = $post["conversationId"];
         
         $tagIdList = array();
         // タグマスタの登録更新
