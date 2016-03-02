@@ -232,7 +232,9 @@ public function action_index($conversationId = false, $year = false, $month = fa
 //		$this->addJSFile("core/js/conversation.js");
                 // TODO: 4 debug
 		$this->addJSFile("/forum/core/js/conversation.js", "last");
-                $this->addJSFile("/forum/core/js/search.conversation.js","last");
+                // 共通検索用js 追加
+                $this->addJSFile("core/js/search.conversation.js");
+//                $this->addJSFile("/forum/core/js/search.conversation.js","last");
 
 		// Add the RSS feed button.
 		// $this->addToMenu("meta", "feed", "<a href='".URL("conversation/index.atom/".$url)."' id='feed'>".T("Feed")."</a>");
@@ -354,7 +356,7 @@ public function action_index($conversationId = false, $year = false, $month = fa
 
 
 /**
- * 会話（テーマ）作成処置
+ * 会話（テーマ）新規作成処理
  * Show the start conversation page.
  *
  * @param string $member A member's name to make the conversation private with.
@@ -404,7 +406,9 @@ public function action_start($member = false)
 		$this->addJSFile("core/js/autocomplete.js");
 //		$this->addJSFile("core/js/conversation.js");    TODO: 4 debug
 		$this->addJSFile("/forum/core/js/conversation.js", "last");
-		$this->addJSFile("/forum/core/js/search.conversation.js","last");
+                // 共通検索用js 追加
+		$this->addJSFile("core/js/search.conversation.js");
+//		$this->addJSFile("/forum/core/js/search.conversation.js","last");
 		$this->addJSVar("mentions", C("esoTalk.format.mentions"));
 		$this->addJSLanguage("message.confirmLeave", "message.confirmDiscardPost");
 
@@ -427,30 +431,33 @@ public function action_start($member = false)
 	// If the form was submitted (validate the presence of the content field)...
 	if ($form->validPostBack("content")) {
             // 新規会話（テーマ） 登録時の処理
-		$model = ET::conversationModel();
+            $model = ET::conversationModel();
 
-		$result = $model->create(array(
-			"title" => $_POST["title"],
-			"channelId" => ET::$session->get("channelId"),
-			"content" => $_POST["content"],
-		), ET::$session->get("membersAllowed"), $form->isPostBack("saveDraft"));
+            $result = $model->create(array(
+                    "title" => $_POST["title"],
+                    "channelId" => ET::$session->get("channelId"),
+                    "content" => $_POST["content"],
+            ), ET::$session->get("membersAllowed"), $form->isPostBack("saveDraft"));
 
-		if ($model->errorCount()) {
-			$this->messages($model->errors(), "warning");
-		}
+            if ($model->errorCount()) {
+                    $this->messages($model->errors(), "warning");
+            }
+            
+            if ($result) {
+                list($conversationId, $postId) = $result;
+                
+                // タグ情報の更新処理
+                ET::tagsModel()->editPost($conversationId, 1, $form->getValue("tags"));
 
-		if ($result) {
-			list($conversationId, $postId) = $result;
+                ET::$session->remove("membersAllowed");
+                ET::$session->remove("channelId");
 
-			ET::$session->remove("membersAllowed");
-			ET::$session->remove("channelId");
-
-			if ($this->responseType === RESPONSE_TYPE_JSON) {
-				$this->json("url", URL(conversationURL($conversationId, $form->getValue("title"))));
-				$this->json("conversationId", $conversationId);
-			}
-			else $this->redirect(URL(conversationURL($conversationId, $form->getValue("title"))));
-		}
+                if ($this->responseType === RESPONSE_TYPE_JSON) {
+                        $this->json("url", URL(conversationURL($conversationId, $form->getValue("title"))));
+                        $this->json("conversationId", $conversationId);
+                }
+                else $this->redirect(URL(conversationURL($conversationId, $form->getValue("title"))));
+            }
 
 	}
 
@@ -483,7 +490,7 @@ protected function getTagsArea($form) {
             // 既存タグ情報取得
             $tagsInfo = ET::tagsModel()->getTagsInfo($conversationId);
         }
-        $str .= "<div class='postTagsArea'><div>10個までタグ付けすることができます。</div>";
+        $str .= "<div class='postTagsArea clearfix'><div>10個までタグ付けすることができます。</div>";
         for($i=0;$i<10;$i++){
             // タグ入力10個まで
             $name = "tag" .$i;
@@ -495,6 +502,23 @@ protected function getTagsArea($form) {
         }
         $str .= '</div>';
     }
+    return $str;
+}
+
+/**
+ * TW, Fb同時投稿チェックボックスエリアを取得
+ * @return string
+ */
+protected function getCheckBoxArea() {
+    // XXX: TW,FB 投稿チェックボタン
+    // SWCユーザ情報の各連携IDがあるか取得
+    $isTwFlg = ET::$session->getTwId() ? 1 : '';
+    $isFbFlg = ET::$session->getFbId() ? 1 : '';
+    // チェックボックスタグ出力
+    $str .= '<div class="postCheckArea clearfix"><ul class="entCheck">';
+    $str .= '<li><input type="checkbox" name="checkTw" class="check" data-flg="'.$isTwFlg .'" value="1"><label for="checkTw1"><img src="' .URL("img/icon_tw_s.png") .'" alt="Twitter" width="61" height="18">にも投稿する</label></li>';
+    $str .= '<li><input type="checkbox" name="checkFb" class="check" data-flg="'.$isFbFlg .'" value="1"><label for="checkFb1"><img src="' .URL("img/icon_fb_s.png") .'" alt="Facebook" width="61" height="16">にも投稿する</label></li>';
+    $str .= '</ul></div>';
     return $str;
 }
 
@@ -1228,10 +1252,10 @@ public function action_editPost($postId = false)
 		ET::postModel()->editPost($post, $form->getValue("content"));
 
                 // タグ情報の更新処理
-		ET::tagsModel()->editPost($post, $form->getValue("tags"));
+                $mainPostFlg = $post["mainPostFlg"];
+		ET::tagsModel()->editPost($post["conversationId"], $mainPostFlg, $form->getValue("tags"));
 
 		$this->trigger("editPostAfter", array(&$post));
-                $mainPostFlg = $post["mainPostFlg"];
 
 		// Normally, redirect back to the conversation.
 		if ($this->responseType === RESPONSE_TYPE_DEFAULT) {

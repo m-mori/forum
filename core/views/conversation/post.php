@@ -65,7 +65,7 @@ if ($isInit && !empty($post["title"]) && ($post["id"]!="reply")): ?>
     <?php endif; ?>
 
     <?php if (SWC_FB_BTN && $mainFlg): // FB ボタン出力の場合 ?>
-    <div class="fb-like" style="float:left;margin-right: 15px;" data-href="<?php echo $post['purl']; ?>" data-layout="button_count" data-action="like" data-show-faces="true" data-share="true"></div>
+    <div class="fb-like" style="float:left;margin-right: 15px;" data-href="<?php echo $post['purl']; ?>" data-layout="button_count" data-action="like" data-show-faces="false" data-share="true"></div>
     <?php endif; ?>
 
     <?php if (SWC_LIKE_BTN): // LIKE ボタン出力の場合 ?>

@@ -196,6 +196,28 @@ public function __construct()
         return "";
     }
     
+    /**
+     * ログインユーザのTwitter連携ID 取得
+     * @return string
+     */
+    public function getTwId() {
+        if($this->userInfo) {
+            return $this->userInfo["twitter_id"];
+        }
+        return "";
+    }
+    
+    /**
+     * ログインユーザのFb連携ID 取得
+     * @return string
+     */
+    public function getFbId() {
+        if($this->userInfo) {
+            return $this->userInfo["facebook_id"];
+        }
+        return "";
+    }
+    
 /**
  * 外観情報
  * Get the value of a specific preference for the currently logged in user.

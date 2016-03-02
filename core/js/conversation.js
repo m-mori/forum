@@ -294,6 +294,46 @@ initReply: function() {
 			e.preventDefault();
 		}
 	});
+        
+        // チェックボックス設定
+        ETConversation.initCheckBoxArea($("#reply"));
+},
+
+/**
+ * TW,Fb チェックボックス選択時
+ * @param {type} objPost
+ * @returns {undefined}
+ */
+initCheckBoxArea: function (objPost) {
+    objPost.find(".postCheckArea input[type='checkbox']").on("change", function (){
+        // チェック選択時の確認ダイアログ表示処理
+        var flg = $(this).attr("data-flg");
+        if ($(this).is(':checked') && !flg) {
+            // チェック時、未連携の場合
+            var rtn = ETConversation.confirmMoveMyPage();
+            if (!rtn) {
+                // キャンセル時、チェック解除、イベント破棄
+                $(this).attr('checked', false);
+                $(this).prop('disabled', true);
+                $(this).css('cursor', "default");
+                $(this).unbind();
+            }
+        }
+    });
+    
+},
+
+/**
+ * マイページ移動確認ダイアログ表示
+ * @returns {undefined}
+ */
+confirmMoveMyPage: function () {
+    // TODO: メッセージ確認
+    var rtn = confirm('現在ソーシャル連携が未設定です。\nマイページに移動してソーシャル連携設定しますか？\n（入力内容はクリアされます）');
+    if (rtn) {
+        location.href = '/mypage/change/';
+    }
+    return false;
 },
 
 // Condense the reply box back into a placeholder.
@@ -389,9 +429,13 @@ startConversation: function(draft) {
 
 	// Disable the post reply and save draft buttons.
 	$("#reply .postReply, #reply .saveDraft").disable();
-
+        
+        // 入力タグ取得
+        var post = $("#reply");
+        var tags = ETConversation.getInputTags(post);
+    
 	// Make the ajax request.
-	var data = {title: title, content: content, channel: channel};
+	var data = {title: title, content: content, channel: channel, tags: tags};
 	if (draft) data.saveDraft = "1";
 	$.ETAjax({
 		url: "conversation/start.ajax",
@@ -697,6 +741,8 @@ editPost: function(postId) {
 		success: function(data) {
 			if (data.messages || data.modalMessage) return;
 			ETConversation.updateEditPost(postId, data.view);
+                        // チェックボックス選択設定
+			ETConversation.initCheckBoxArea($("#p" + postId));
                         // 編集モード時 SNSエリア非表示
                         ETConversation.switchDisplaySnsArea(objSnsArea, 1);
 		}
@@ -756,6 +802,7 @@ updateEditPost: function(postId, html) {
 			e.preventDefault();
 		}
 	});
+        
 },
 
 /**
@@ -775,6 +822,42 @@ getSnsArea: function (postId) {
     return $("#p"+postId).next(".postSnsArea");
 },
 
+/**
+ * 投稿チェックエリアのTWチェックボックスを取得する
+ * @param {type} postId
+ * @returns {jQuery}
+ */
+getCheckBoxTw: function (postId) {
+    return $("#p"+postId).find("div.postCheckArea input[name='checkTw']");
+},
+
+/**
+ * 投稿チェックエリアのTWチェックボックスを取得する
+ * @param {type} postId
+ * @returns {jQuery}
+ */
+getCheckBoxFb: function (postId) {
+    return $("#p"+postId).find("div.postCheckArea input[name='checkFb']");
+},
+
+/**
+ * 入力内容のタグを取得
+ * @param {type} objPost
+ * @returns {undefined}
+ */
+getInputTags: function (objPost) {
+    // タグエリア
+    var tags = new Array();
+    objPost.find(".postTagsArea input.postTag").each(function (idx, elm){
+        // タグフラグ設定
+        var str = ETConversation.trimText($(elm).val());
+        if (str) {
+            tags.push(str);
+        }
+    });
+    return tags;
+},
+
 // Save an edited post to the database.
 saveEditPost: function(postId, content) {
 
@@ -783,17 +866,28 @@ saveEditPost: function(postId, content) {
 	$(".button", post).disable();
         // SNS エリア
         var objSnsArea = ETConversation.getSnsArea(postId);
-        // タグエリア
-        var tags = new Array();
-        var tagsFlg = false;
-        post.find(".postTagsArea input.postTag").each(function (idx, elm){
-            // タグフラグ設定
-            tagsFlg = true;
-            var str = ETConversation.trimText($(elm).val());
-            if (str) {
-                tags.push(str);
-            }
-        });
+        // 入力タグ取得
+        var tags = ETConversation.getInputTags(post);
+//        var tags = new Array();
+//        var tagsFlg = false;
+//        post.find(".postTagsArea input.postTag").each(function (idx, elm){
+//            // タグフラグ設定
+//            tagsFlg = true;
+//            var str = ETConversation.trimText($(elm).val());
+//            if (str) {
+//                tags.push(str);
+//            }
+//        });
+        // 同時投稿チェックエリア
+        var checkTw = ETConversation.getCheckBoxTw(postId);
+        var checkFb = ETConversation.getCheckBoxFb(postId);
+        if ((checkTw.val()==1 && !checkTw.attr("data-flg"))
+                || (checkFb.val()==1 && !checkFb.attr("data-flg"))) {
+            // TWチェックあり、かつ未連携の場合
+            // or Fbチェックあり、かつ未連携の場合
+            // マイページ移動の確認ダイアログ表示
+            ETConversation.confirmMoveMyPage();
+        }
 
 	// Make the ajax request.
 	$.ETAjax({

@@ -28,6 +28,9 @@ $body = $form->input("content", "textarea", array("cols" => "200", "rows" => "20
 // タグ入力
 $footer = $this->getTagsArea($form);
 
+// TW,FB 投稿チェックボタン
+$footer .= $this->getCheckBoxArea();
+
 $footer .= "<div class='editButtons'>".
 	$form->saveButton()." ".
 	$form->cancelButton()."</div>";
