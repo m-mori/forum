@@ -27,6 +27,7 @@ $config["esoTalk.enabledPlugins"] = array (
   0 => 'Attachments',
   1 => 'BBCode',
   2 => 'Emoticons',
+  3 => 'Bookmarks',
 );
 $config["plugin.Attachments.allowedFileTypes"] = array (
   0 => 'jpg',
@@ -36,6 +37,7 @@ $config["plugin.Attachments.allowedFileTypes"] = array (
   4 => 'bmp',
 );
 $config["plugin.Attachments.maxFileSize"] = '26214400';
+$config["Bookmarks.version"] = '1.0.0g4';
 
-// Last updated by: satおいしい水 (192.168.10.157) @ Tue, 16 Feb 2016 18:21:52 +0900
+// Last updated by: satおいしい水 (192.168.10.157) @ Tue, 01 Mar 2016 16:39:20 +0900
 ?>
