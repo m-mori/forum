@@ -28,6 +28,7 @@ $config["esoTalk.enabledPlugins"] = array (
   1 => 'BBCode',
   2 => 'Emoticons',
   3 => 'Bookmarks',
+  4 => 'GoogleAnalytics',
 );
 $config["plugin.Attachments.allowedFileTypes"] = array (
   0 => 'jpg',
@@ -38,6 +39,7 @@ $config["plugin.Attachments.allowedFileTypes"] = array (
 );
 $config["plugin.Attachments.maxFileSize"] = '26214400';
 $config["Bookmarks.version"] = '1.0.0g4';
+$config["GoogleAnalytics.version"] = '1.0.0g4';
 
-// Last updated by: satおいしい水 (192.168.10.157) @ Tue, 01 Mar 2016 16:39:20 +0900
+// Last updated by: satおいしい水 (192.168.10.157) @ Wed, 02 Mar 2016 12:17:03 +0900
 ?>
